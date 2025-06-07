@@ -1,0 +1,218 @@
+// prepkit – a hybrid C-style preprocessor for GreyScript.
+// 
+// Enables modular code organization via `#import` directives.
+// - Entry file uses native `import _code()` to avoid text size limits.
+// - Nested imports are fully inlined, supporting deep includes and relative paths.
+// 
+// Supports:
+//   - Relative and nested imports
+//   - Plain `.src` files (binaries not supported for nested imports)
+//   - Single-file output suitable for compilation or inspection
+// 
+// Usage:
+//   prepkit <source_file> [options]
+// 
+// Options:
+//   -o <path>   Output folder path (default: alongside source)
+//   -d          Dry run — process and merge files, but don’t write output
+//   -i          Allow use of native `import_code` at top level
+
+print
+if params.len == 0 then
+	print "Usage:"
+	print "  prepkit [source file path] [options]"
+	print ""
+	print "Options:"
+	print "  -o <output_folder>  Specify output directory (default: source file's folder)"
+	print "  -d                  Dry run: inline imports without final compilation"
+	print "  -i                  Allow native import_code at top level"
+	exit()
+end if
+
+currentShell = get_shell
+hostComputer = currentShell.host_computer
+
+// 
+// Parses command-line arguments into a map of flags and their values.
+// 
+// Supports:
+//   - Flags with values: -o /path
+//   - Standalone flags:  -t (true)
+// 
+getCliFlags = function()
+	flags = {}
+	i = 0
+	while i < params.len
+		param = params[i]
+		if param[0] == "-" then
+			// Check the next param to see if it is a value(no "-") for the current param
+			if i + 1 < params.len and params[i + 1][0] != "-" then
+				flags[param] = params[i + 1]
+				i = i + 1
+			else
+				flags[param] = true  // flag without a value
+			end if
+		end if
+		i = i + 1
+	end while
+
+	return flags
+end function
+
+// 
+// Resolves a relative path to an absolute path.
+// 
+// @param string relativePath    The relative path to resolve (e.g. "./folder/file.txt").
+// @param string currentPath     (Optional) The base path to resolve from. If null, uses current working directory.
+// @return                The resolved absolute path.
+// 
+resolvePath = function(relativePath, currentPath = null)
+	if relativePath[0] == "/" then
+		return relativePath  // already absolute
+	end if
+
+	if currentPath == null then
+		currentPath = current_path
+	end if
+
+	pathComponents = relativePath.split("/")
+
+	for component in pathComponents
+		if component == "." then
+			continue
+		else if component == ".." then
+			currentPath = parent_path(currentPath)
+		else
+			currentPath = currentPath + "/" + component
+		end if
+	end for
+
+	return currentPath
+end function
+
+// Preps file for compilation by inlining all #import directives.
+// 
+// @param File file     The file to process
+// @param string dest   Destination folder path for output
+// @return File       The prepped output file
+// 
+prepFile = function(file, dest, nestingLevel = 0)
+	if not file.has_permission("r") then
+		exit("Can not read file [" + file.path + "]: Read permission denied! ")
+	end if
+
+	if nestingLevel != 0 then
+		print "Linking import: " + file.name
+	end if
+
+	fileContents = file.get_content
+	outputLines = []
+	lines = fileContents.split(char(10))
+	
+	for line in lines
+		if line.indexOf("#import") != null then
+			startQuote = line.indexOf("""")
+			endQuote = line.lastIndexOf("""")
+			
+			if startQuote == null or endQuote == null or endQuote <= startQuote then
+				exit("Invalid #import syntax in [" + file.path + "]:" + (outputLines.len + 1))
+			end if
+
+			importPath = slice(line, startQuote + 1, endQuote).trim
+			
+			if importPath.indexOf(".src") == null then
+				importPath = importPath + ".src"
+			end if
+			
+			importResolvedPath = resolvePath(importPath, file.parent.path)
+			importedFile = hostComputer.File(importResolvedPath)
+			if not importedFile then
+				exit("Failed to import [" + importPath + "] resolved to [" + importResolvedPath + "] in [" + file.path + "]:" + (outputLines.len + 1))
+			end if
+		
+			if nestingLevel == 0 then
+				importedFile = prepFile(importedFile, dest, nestingLevel + 1)
+				outputLines.push("import" + "_code(""" + importedFile.path + """)") // The compiler sees "import_code" text and freaks out :D, se we split the word
+			else
+				outputLines.push(prepFile(importedFile, dest, nestingLevel + 1).join(char(10)))
+			end if
+		else
+			outputLines.push(line)
+		end if
+	end for
+
+	prepOutDir = dest + "/prepkit_out"
+	if not hostComputer.File(prepOutDir) then
+		hostComputer.create_folder(dest, "prepkit_out")
+	end if
+	
+	if nestingLevel < 2 then
+		outputDest = prepOutDir
+		outputFileName = file.name
+		outputPath = outputDest + "/" + outputFileName
+		outputFile = hostComputer.File(outputPath)
+		
+		if outputFile == null then
+			outputFileTouchResult = hostComputer.touch(outputDest, outputFileName)
+			if outputFileTouchResult != 1 then
+				exit("Failed to create output file [" + outputPath + "]: " + outputFileTouchResult)
+			else
+				outputFile = hostComputer.File(outputPath)
+				if outputFile == null then
+					exit("Failed to open output file: " + outputPath)
+				end if
+			end if
+		end if 
+			
+		outputFile.set_content(outputLines.join(char(10)))	
+		return outputFile
+	else
+		return outputLines
+	end if
+
+end function
+
+sourceFilePath = resolvePath(params[0])
+sourceFile = hostComputer.File(sourceFilePath)
+if not sourceFile then
+	exit("Path Error: '" + sourceFilePath + "' is invalid!")
+end if
+
+if sourceFile.is_folder then
+	exit("Path Error: '" + sourceFilePath + "' is a directory, expected a file.")
+end if 
+
+destinationPath = sourceFile.parent.path
+cliFlags = getCliFlags()
+if cliFlags.hasIndex("-o") then
+	destinationResolvedPath = resolvePath(cliFlags["-o"])
+	destinationPath = hostComputer.File(destinationResolvedPath)
+	if not destinationPath then
+		exit("Path Error: destination path ['" + destinationResolvedPath + "'] is invalid!")
+	end if
+
+	if not destinationPath.is_folder then
+		exit("Path Error: '" + destinationPath.path + "' is a file, expected a directory.")
+	end if 
+
+	destinationPath = destinationPath.path
+end if
+
+dryRun = cliFlags.hasIndex("-d")
+if dryRun then
+	print "Dry run: inlining imports without final build output."
+end if
+
+inlinedSourceCodeFile = prepFile(sourceFile, sourceFile.parent.path)
+
+if not dryRun then
+	print("Compiling bundle...")
+	buildErrors = currentShell.build(inlinedSourceCodeFile.path, destinationPath, cliFlags.hasIndex("-i"))
+	inlinedSourceCodeFile.parent.delete
+		
+	if buildErrors != "" then
+		exit("Build failed: " + buildErrors)
+	end if
+
+	print "Build finished: " + destinationPath
+end if
