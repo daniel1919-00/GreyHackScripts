@@ -1,4 +1,4 @@
-# GreyHackScripts
+# Grey Hack Scripts
 A collection of scripts made for [Grey Hack](https://store.steampowered.com/app/605230/Grey_Hack/).
 
 ## Available scripts
