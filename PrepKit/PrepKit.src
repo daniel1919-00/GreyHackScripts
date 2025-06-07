@@ -1,5 +1,5 @@
 // prepkit – a hybrid C-style preprocessor for GreyScript.
-// Built by _daniel1919 (https://github.com/daniel1919-00)
+// Built by: _daniel1919 (https://github.com/daniel1919-00)
 // 
 // Enables modular code organization via `#import` directives.
 // - Entry file uses native `import _code()` to avoid text size limits.
@@ -113,6 +113,12 @@ prepFile = function(file, dest, nestingLevel = 0)
 	lines = fileContents.split(NEW_LINE)
 	
 	for line in lines
+        line = line.trim
+        // Skip empty lines and comments
+        if line == "" or line[0] == "/" then
+            continue
+        end if
+
         lineContainsImport = line.indexOf("#import") != null
 		if lineContainsImport then
 			startQuote = line.indexOf("""")
@@ -136,7 +142,7 @@ prepFile = function(file, dest, nestingLevel = 0)
 		
 			if nestingLevel == 0 then
 				importedFile = prepFile(importedFile, dest, nestingLevel + 1)
-				outputLines.push("import" + "_code(""" + importedFile.path + """)") // The compiler sees "import_code" text and freaks out :D, se we split the word
+				outputLines.push("import" + "_code(""" + importedFile.path + """)") // The compiler sees "import_code" text and freaks out :D, so we split the word
 			else
                 importLines = prepFile(importedFile, dest, nestingLevel + 1)
                 for importLine in importLines
@@ -219,9 +225,10 @@ if dryRun then
 end if
 
 inlinedSourceCodeFile = prepFile(sourceFile, sourceFile.parent.path)
+inlinedSourceCodeFileName = inlinedSourceCodeFile.name[0:-4]
 
 if not dryRun then
-	print("Compiling bundle...")
+	print("Compiling binary...")
 	buildErrors = CurrentShell.build(inlinedSourceCodeFile.path, destinationPath, CLI_FLAGS.hasIndex("-i"))
 	inlinedSourceCodeFile.parent.delete
 		
@@ -229,5 +236,5 @@ if not dryRun then
 		exit("Build failed: " + buildErrors)
 	end if
 
-	print "Binary compiled: " + inlinedSourceCodeFile.path[0:-4]
+	print "Binary compiled: " + destinationPath + "/" + inlinedSourceCodeFileName
 end if

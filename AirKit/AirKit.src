@@ -1,0 +1,97 @@
+//
+// AirKit – A simple script to quickly obtain and connect to a vulnerable wifi network
+// Built by: _daniel1919 (https://github.com/daniel1919-00)
+//
+// Automates Wi-Fi network attacks by orchestrating airmon, aireplay, and aircrack.
+//
+
+#import "../_Shared/CoreKit.src"
+
+crypto = include_lib("/lib/crypto.so")
+CurrentShell = get_shell
+HostComputer = CurrentShell.host_computer
+
+coreKit.printHeader("AirKit", "_daniel1919", "Handles airmon, aireplay and aircrack, " + coreKit.NEW_LINE + " so you don't have to.")
+
+networkInterface = user_input("Net interface(defaults to wlan0): ", false)
+if networkInterface == "" then
+	networkInterface = "wlan0"
+end if
+
+networks = HostComputer.wifi_networks(networkInterface)
+print "Scanning for WIFI networks on ["+networkInterface+"]..."
+
+wifiEntryToInfo = function(wifiEntry)
+    parsed = wifiEntry.split(" ")
+
+    power = parsed[1][:-1].to_int
+    potentialAcks = round(300000 / (power + 15))
+
+    return [parsed[0], parsed[2], potentialAcks, power]
+end function
+
+crackWifi = function(targetNetwork)
+    airmonResult = crypto.airmon("start", networkInterface)
+    if typeof(airmonResult) == "string" then
+    exit("There was an error while switching monitoring mode: " + airmonResult)
+    end if
+
+    aireplayResult = crypto.aireplay(targetNetwork.bssid, targetNetwork.essid, targetNetwork.potentialAcks)
+    crypto.airmon("stop", networkInterface)
+
+    if aireplayResult != null then
+        exit("aireplay error: " + aireplayResult)
+    end if
+
+    aireplayOutputFile = HostComputer.File("file.cap")
+
+    if aireplayOutputFile == null then
+        exit("Failed to find aireplay output file.cap!")
+    end if
+
+    wifiPassword = crypto.aircrack(aireplayOutputFile.path)
+
+    aireplayOutputFile.delete
+
+    return wifiPassword
+end function
+
+wifiTargetToFormattedText = function(wifi)
+    return "ESSID: " + wifi.essid + " | POWER: " + wifi.power + "% | BSSID: " + wifi.bssid + " | Potential ACKs: " + wifi.potentialAcks
+end function
+
+wifiTargets = []
+for network in networks
+    parsed = wifiEntryToInfo(network)
+    wifiTarget = {}
+    wifiTarget.bssid = parsed[0]
+    wifiTarget.essid = parsed[1]
+    wifiTarget.potentialAcks = parsed[2]
+    wifiTarget.power = parsed[3]
+    wifiTargets.push(wifiTarget)
+end for
+
+wifiTargets.sort("power", 0)
+
+for wifiTarget in wifiTargets
+     print "Attempting to crack the password for " + wifiTargetToFormattedText(wifiTarget)
+    wifiPassword = crackWifi(wifiTarget)
+    if wifiPassword == null then
+        print "Failed to crack! Trying next network on list."
+        continue
+    end if
+
+    connectToWifi = user_input("Wifi password found [" + wifiPassword + "], connect to wifi? [y/n] ").lower == "y"
+
+    if connectToWifi then
+        connectionResult = HostComputer.connect_wifi(networkInterface, wifiTarget.bssid, wifiTarget.essid, wifiPassword)
+
+        if typeof(connectionResult) == "string" then
+            print("There was an error while connecting to new Wifi: " + connectionResult)
+        else
+            print("Connected to new Wifi ["+ wifiTarget.essid +"] successfully.")
+        end if
+    end if
+
+    break
+end for

@@ -1,5 +1,5 @@
 // coreKit – a lightweight utility library for GreyScript.
-// Built by _daniel1919 (https://github.com/daniel1919-00)
+// Built by: _daniel1919 (https://github.com/daniel1919-00)
 // 
 // Provides general utilities, math helpers, path resolution, and CLI argument parsing.
 // 
@@ -12,6 +12,7 @@
 // ------------------------------------
 
 coreKit = {}
+coreKit.NEW_LINE = char(10)
 
 // Prints a formatted program header block.
 // 
@@ -22,8 +23,13 @@ coreKit.printHeader = function(programName, author, description = "")
 	lines = []
 	lines.push("# " + programName)
 	lines.push("# Assembled by: " + author)
+	
 	if description != "" then
-		lines.push("# " + description)
+		// Assume that new lines could be added in the description
+		descLines = description.split(coreKit.NEW_LINE)
+		for descLine in descLines
+			lines.push("# " + descLine.trim)
+		end for
 	end if
 
 	// Determine the max line length
@@ -46,6 +52,7 @@ coreKit.printHeader = function(programName, author, description = "")
 	print borderLine
 	print ""
 end function
+
 
 
 // ------------------------------------
