@@ -1,8 +1,8 @@
 // coreKit – a lightweight utility library for GreyScript.
 // Built by _daniel1919 (https://github.com/daniel1919-00)
-//
+// 
 // Provides general utilities, math helpers, path resolution, and CLI argument parsing.
-//
+// 
 
 
 // ------------------------------------
