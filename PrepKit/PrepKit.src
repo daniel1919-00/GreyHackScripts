@@ -1,4 +1,5 @@
 // prepkit – a hybrid C-style preprocessor for GreyScript.
+// Built by _daniel1919 (https://github.com/daniel1919-00)
 // 
 // Enables modular code organization via `#import` directives.
 // - Entry file uses native `import _code()` to avoid text size limits.
@@ -64,9 +65,9 @@ end while
 // 
 // Resolves a relative path to an absolute path.
 // 
-// @param string relativePath    The relative path to resolve (e.g. "./folder/file.txt").
-// @param string currentPath     (Optional) The base path to resolve from. If null, uses current working directory.
-// @return                The resolved absolute path.
+// @param string relativePath  The relative path to resolve (e.g. "./folder/file.txt" -> /home/user/folder/file.txt).
+// @param string currentPath   (Optional) The base path to resolve from. If null, uses current working directory.
+// @return                     The resolved absolute path.
 // 
 resolvePath = function(relativePath, currentPath = null)
 	if relativePath[0] == "/" then
@@ -94,9 +95,9 @@ end function
 
 // Preps file for compilation.
 // 
-// @param File file     The file to process
-// @param string dest   Destination folder path for output
-// @return File       The prepped output file
+// @param File file    The file to process
+// @param string dest  Destination folder path for output
+// @return File        The prepped output file
 // 
 prepFile = function(file, dest, nestingLevel = 0)
 	if not file.has_permission("r") then
