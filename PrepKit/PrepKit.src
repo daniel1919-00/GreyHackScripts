@@ -6,7 +6,7 @@
 // 
 // Supports:
 //   - Relative and nested imports
-//   - Plain `.src` files (binaries not supported for nested imports)
+//   - Plain `.src` files (binaries not supported)
 //   - Single-file output suitable for compilation or inspection
 // 
 // Usage:
@@ -17,8 +17,10 @@
 //   -d          Dry run — process and merge files, but don’t write output
 //   -i          Allow use of native `import_code` at top level
 
-print
 if params.len == 0 then
+	print "prepkit – a hybrid C-style preprocessor for GreyScript."
+	print "Enables modular code organization via `#import` directives."
+	print ""
 	print "Usage:"
 	print "  prepkit [source file path] [options]"
 	print ""
@@ -29,8 +31,9 @@ if params.len == 0 then
 	exit()
 end if
 
-currentShell = get_shell
-hostComputer = currentShell.host_computer
+NEW_LINE = char(10)
+CurrentShell = get_shell
+HostComputer = CurrentShell.host_computer
 
 // 
 // Parses command-line arguments into a map of flags and their values.
@@ -90,7 +93,7 @@ resolvePath = function(relativePath, currentPath = null)
 	return currentPath
 end function
 
-// Preps file for compilation by inlining all #import directives.
+// Preps file for compilation.
 // 
 // @param File file     The file to process
 // @param string dest   Destination folder path for output
@@ -98,19 +101,20 @@ end function
 // 
 prepFile = function(file, dest, nestingLevel = 0)
 	if not file.has_permission("r") then
-		exit("Can not read file [" + file.path + "]: Read permission denied! ")
+		exit("Can not read file [" + file.path + "]: Read permission denied!")
 	end if
 
 	if nestingLevel != 0 then
-		print "Linking import: " + file.name
+		print "Linking import [" + file.name + "]"
 	end if
 
 	fileContents = file.get_content
 	outputLines = []
-	lines = fileContents.split(char(10))
+	lines = fileContents.split(NEW_LINE)
 	
 	for line in lines
-		if line.indexOf("#import") != null then
+        lineContainsImport = line.indexOf("#import") != null
+		if lineContainsImport then
 			startQuote = line.indexOf("""")
 			endQuote = line.lastIndexOf("""")
 			
@@ -125,46 +129,51 @@ prepFile = function(file, dest, nestingLevel = 0)
 			end if
 			
 			importResolvedPath = resolvePath(importPath, file.parent.path)
-			importedFile = hostComputer.File(importResolvedPath)
+			importedFile = HostComputer.File(importResolvedPath)
 			if not importedFile then
-				exit("Failed to import [" + importPath + "] resolved to [" + importResolvedPath + "] in [" + file.path + "]:" + (outputLines.len + 1))
+				exit("Failed to import [" + importResolvedPath + "] in [" + file.path + "]:" + (outputLines.len + 1))
 			end if
 		
 			if nestingLevel == 0 then
 				importedFile = prepFile(importedFile, dest, nestingLevel + 1)
 				outputLines.push("import" + "_code(""" + importedFile.path + """)") // The compiler sees "import_code" text and freaks out :D, se we split the word
 			else
-				outputLines.push(prepFile(importedFile, dest, nestingLevel + 1).join(char(10)))
+                importLines = prepFile(importedFile, dest, nestingLevel + 1)
+                for importLine in importLines
+                    outputLines.push(importLine)
+                end for
 			end if
 		else
 			outputLines.push(line)
 		end if
 	end for
-
-	prepOutDir = dest + "/prepkit_out"
-	if not hostComputer.File(prepOutDir) then
-		hostComputer.create_folder(dest, "prepkit_out")
-	end if
 	
+    // Because starting from the first nest level, all imports are inlined, we make a copy of the original files
+    // And move them next to the source file, starting with the level 2 nest level everything is inlined, 
+    // and the file location does not matter anymore
 	if nestingLevel < 2 then
-		outputDest = prepOutDir
+        outputDest = dest + "/prepkit_out"
+        if nestingLevel == 0 and not HostComputer.File(outputDest) then
+            HostComputer.create_folder(dest, "prepkit_out")
+        end if
+
 		outputFileName = file.name
 		outputPath = outputDest + "/" + outputFileName
-		outputFile = hostComputer.File(outputPath)
+		outputFile = HostComputer.File(outputPath)
 		
 		if outputFile == null then
-			outputFileTouchResult = hostComputer.touch(outputDest, outputFileName)
+			outputFileTouchResult = HostComputer.touch(outputDest, outputFileName)
 			if outputFileTouchResult != 1 then
 				exit("Failed to create output file [" + outputPath + "]: " + outputFileTouchResult)
 			else
-				outputFile = hostComputer.File(outputPath)
+				outputFile = HostComputer.File(outputPath)
 				if outputFile == null then
 					exit("Failed to open output file: " + outputPath)
 				end if
 			end if
 		end if 
 			
-		outputFile.set_content(outputLines.join(char(10)))	
+		outputFile.set_content(outputLines.join(NEW_LINE))	
 		return outputFile
 	else
 		return outputLines
@@ -173,7 +182,7 @@ prepFile = function(file, dest, nestingLevel = 0)
 end function
 
 sourceFilePath = resolvePath(params[0])
-sourceFile = hostComputer.File(sourceFilePath)
+sourceFile = HostComputer.File(sourceFilePath)
 if not sourceFile then
 	exit("Path Error: '" + sourceFilePath + "' is invalid!")
 end if
@@ -186,7 +195,7 @@ destinationPath = sourceFile.parent.path
 cliFlags = getCliFlags()
 if cliFlags.hasIndex("-o") then
 	destinationResolvedPath = resolvePath(cliFlags["-o"])
-	destinationPath = hostComputer.File(destinationResolvedPath)
+	destinationPath = HostComputer.File(destinationResolvedPath)
 	if not destinationPath then
 		exit("Path Error: destination path ['" + destinationResolvedPath + "'] is invalid!")
 	end if
@@ -207,7 +216,7 @@ inlinedSourceCodeFile = prepFile(sourceFile, sourceFile.parent.path)
 
 if not dryRun then
 	print("Compiling bundle...")
-	buildErrors = currentShell.build(inlinedSourceCodeFile.path, destinationPath, cliFlags.hasIndex("-i"))
+	buildErrors = CurrentShell.build(inlinedSourceCodeFile.path, destinationPath, cliFlags.hasIndex("-i"))
 	inlinedSourceCodeFile.parent.delete
 		
 	if buildErrors != "" then
