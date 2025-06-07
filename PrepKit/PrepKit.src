@@ -16,6 +16,7 @@
 //   -o <path>   Output folder path (default: alongside source)
 //   -d          Dry run — process and merge files, but don’t write output
 //   -i          Allow use of native `import_code` at top level
+//   -c          Preserve script name case (defaults to lowercase)
 
 if params.len == 0 then
 	print "prepkit – a hybrid C-style preprocessor for GreyScript."
@@ -25,9 +26,10 @@ if params.len == 0 then
 	print "  prepkit [source file path] [options]"
 	print ""
 	print "Options:"
-	print "  -o <output_folder>  Specify output directory (default: source file's folder)"
-	print "  -d                  Dry run: inline imports without final compilation"
-	print "  -i                  Allow native import_code at top level"
+	print "  -o <output_folder> Specify output directory (default: source file's folder)"
+	print "  -d                 Dry run: inline imports without final compilation"
+	print "  -i                 Allow native import_code at top level"
+    print "  -c                 Preserve script name case"
 	exit()
 end if
 
@@ -35,32 +37,29 @@ NEW_LINE = char(10)
 CurrentShell = get_shell
 HostComputer = CurrentShell.host_computer
 
-// 
-// Parses command-line arguments into a map of flags and their values.
-// 
-// Supports:
-//   - Flags with values: -o /path
-//   - Standalone flags:  -t (true)
-// 
-getCliFlags = function()
-	flags = {}
-	i = 0
-	while i < params.len
-		param = params[i]
-		if param[0] == "-" then
-			// Check the next param to see if it is a value(no "-") for the current param
-			if i + 1 < params.len and params[i + 1][0] != "-" then
-				flags[param] = params[i + 1]
-				i = i + 1
-			else
-				flags[param] = true  // flag without a value
-			end if
-		end if
-		i = i + 1
-	end while
-
-	return flags
-end function
+CLI_FLAGS = {}
+i = 0
+while i < params.len
+    param = params[i]
+    if param[0] == "-" then
+        // Check to see if we have combined flags (e.g. -ab as -a and -b)
+        if param.len > 2 then
+            for j in range(1, param.len - 1)
+                flag = "-" + param[j]
+                CLI_FLAGS[flag] = true
+            end for
+        else
+            // Check the next param to see if it is a value(no "-") for the current param
+            if i + 1 < params.len and params[i + 1][0] != "-" then
+                CLI_FLAGS[param] = params[i + 1]
+                i = i + 1
+            else
+                CLI_FLAGS[param] = true  // flag without a value
+            end if
+        end if
+    end if
+    i = i + 1
+end while
 
 // 
 // Resolves a relative path to an absolute path.
@@ -153,11 +152,18 @@ prepFile = function(file, dest, nestingLevel = 0)
     // and the file location does not matter anymore
 	if nestingLevel < 2 then
         outputDest = dest + "/prepkit_out"
-        if nestingLevel == 0 and not HostComputer.File(outputDest) then
-            HostComputer.create_folder(dest, "prepkit_out")
+        outputFileName = file.name
+
+        if nestingLevel == 0 then
+            if not HostComputer.File(outputDest) then
+                HostComputer.create_folder(dest, "prepkit_out")
+            end if
+
+            if not CLI_FLAGS.hasIndex("-c") then
+                outputFileName = outputFileName.lower
+            end if
         end if
 
-		outputFileName = file.name
 		outputPath = outputDest + "/" + outputFileName
 		outputFile = HostComputer.File(outputPath)
 		
@@ -192,9 +198,8 @@ if sourceFile.is_folder then
 end if 
 
 destinationPath = sourceFile.parent.path
-cliFlags = getCliFlags()
-if cliFlags.hasIndex("-o") then
-	destinationResolvedPath = resolvePath(cliFlags["-o"])
+if CLI_FLAGS.hasIndex("-o") then
+	destinationResolvedPath = resolvePath(CLI_FLAGS["-o"])
 	destinationPath = HostComputer.File(destinationResolvedPath)
 	if not destinationPath then
 		exit("Path Error: destination path ['" + destinationResolvedPath + "'] is invalid!")
@@ -207,7 +212,7 @@ if cliFlags.hasIndex("-o") then
 	destinationPath = destinationPath.path
 end if
 
-dryRun = cliFlags.hasIndex("-d")
+dryRun = CLI_FLAGS.hasIndex("-d")
 if dryRun then
 	print "Dry run: inlining imports without final build output."
 end if
@@ -216,12 +221,12 @@ inlinedSourceCodeFile = prepFile(sourceFile, sourceFile.parent.path)
 
 if not dryRun then
 	print("Compiling bundle...")
-	buildErrors = CurrentShell.build(inlinedSourceCodeFile.path, destinationPath, cliFlags.hasIndex("-i"))
+	buildErrors = CurrentShell.build(inlinedSourceCodeFile.path, destinationPath, CLI_FLAGS.hasIndex("-i"))
 	inlinedSourceCodeFile.parent.delete
 		
 	if buildErrors != "" then
 		exit("Build failed: " + buildErrors)
 	end if
 
-	print "Build finished: " + destinationPath
+	print "Binary compiled: " + inlinedSourceCodeFile.path[0:-4]
 end if

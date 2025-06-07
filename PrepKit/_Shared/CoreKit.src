@@ -1,0 +1,200 @@
+// ------------------------------------
+// -                                  -
+// -        GENERAL UTILITIES         -
+// -                                  -
+// ------------------------------------
+
+coreKit = {}
+
+// Prints a formatted program header block.
+// 
+// @param string programName     Name of the program.
+// @param string author     	 Author.
+// @param string [description]   Optional program description.
+coreKit.printHeader = function(programName, author, description = "")
+	lines = []
+	lines.push("# " + programName)
+	lines.push("# Assembled by: " + author)
+	if description != "" then
+		lines.push("# " + description)
+	end if
+
+	// Determine the max line length
+	maxLen = 0
+	for line in lines
+		if line.len > maxLen then
+			maxLen = line.len
+		end if
+	end for
+
+    // Subtract 2 chars to account for the initial '# ' in each line
+	border = "=" * (maxLen - 2)
+	borderLine = "# " + border
+
+	print ""
+	print borderLine
+	for line in lines
+		print line
+	end for
+	print borderLine
+	print ""
+end function
+
+
+// ------------------------------------
+// -                                  -
+// -        MATH UTILITIES            -
+// -                                  -
+// ------------------------------------
+
+coreKit.math = {}
+
+// Gets the maximum between numbers a and b
+// @param number a
+// @param number b
+// @return number
+coreKit.math.max = function(a, b)
+	if a > b then
+		return a
+	else 
+		return b
+	end if
+end function
+
+// Gets the minimum between numbers a and b
+// @param number a
+// @param number b
+// @return number
+coreKit.math.min = function(a, b)
+	if a < b then
+		return a
+	else 
+		return b
+	end if
+end function
+
+// Clamps a number between min and max.
+// @param number val Value to clamp
+// @param number minVal
+// @param number maxVal
+coreKit.math.clamp = function(val, minVal, maxVal)
+	return coreKit.math.max(minVal, coreKit.math.min(val, maxVal))
+end function
+
+// ------------------------------------
+// -                                  -
+// -        PATH UTILITIES            -
+// -                                  -
+// ------------------------------------
+
+coreKit.Path = {}
+
+// 
+// Resolves a relative path to an absolute path.
+// 
+// @param string relativePath    The relative path to resolve (e.g. "./folder/file.txt").
+// @param string currentPath     (Optional) The base path to resolve from. If null, uses current working directory.
+// @return                       The resolved absolute path.
+// 
+coreKit.Path.resolve = function(relativePath, currentPath = null)
+	if relativePath[0] == "/" then
+		return relativePath  // already absolute
+	end if
+
+	if currentPath == null then
+		currentPath = current_path
+	end if
+
+	pathComponents = relativePath.split("/")
+
+	for component in pathComponents
+		if component == "." then
+			continue
+		else if component == ".." then
+			currentPath = parent_path(currentPath)
+		else
+			currentPath = currentPath + "/" + component
+		end if
+	end for
+
+	return currentPath
+end function
+
+
+// ------------------------------------
+// -                                  -
+// -        CLI UTILITIES             -
+// -                                  -
+// ------------------------------------
+
+coreKit.Cli = {}
+coreKit.Cli._flagsParsed = false
+
+// 
+// Parses command-line arguments into a map of flags and their values.
+// 
+// Supports:
+//   - Flags with values, e.g. -o /path
+//   - Standalone boolean flags, e.g. -t (sets flag to true)
+//   - Combined single-character flags, e.g. -ab is equivalent to -a and -b both true
+//
+coreKit.Cli.getFlags = function()
+	if coreKit.Cli._flagsParsed then
+		return self.flags
+	end if
+
+	coreKit.Cli._flagsParsed = true
+	self.flags = {}
+	i = 0
+    while i < params.len
+        param = params[i]
+        if param[0] == "-" then
+            // Check to see if we have combined flags (e.g. -ab as -a and -b)
+            if param.len > 2 then
+                for j in range(1, param.len - 1)
+                    flag = "-" + param[j]
+                    self.flags[flag] = true
+                end for
+            else
+                // Check the next param to see if it is a value(no "-") for the current param
+                if i + 1 < params.len and params[i + 1][0] != "-" then
+                    self.flags[param] = params[i + 1]
+                    i = i + 1
+                else
+                    self.flags[param] = true  // flag without a value
+                end if
+            end if
+        end if
+        i = i + 1
+    end while
+
+	return self.flags
+end function
+
+// Checks if a specific flag was passed in the command-line arguments.
+// 
+// @param string flag   The flag name to check (e.g. "o" or "-o").
+// @return boolean      True if the flag is present, otherwise false.
+coreKit.Cli.hasFlag = function(flag)
+	if flag[0] != "-" then
+		flag = "-" + flag	
+	end if
+
+	return self.getFlags().hasIndex(flag)
+end function
+
+// Retrieves the value associated with a command-line flag.
+// 
+// @param string flag  The flag name to look up (e.g. "o" or "-o").
+// @return boolean     The value of the flag, or null if the flag is not present.
+coreKit.Cli.getFlag = function(flag)
+	if flag[0] != "-" then
+		flag = "-" + flag	
+	end if
+
+	if not self.hasFlag(flag) then
+		return null
+	end if
+
+	return self.getFlags()[flag]
+end function
