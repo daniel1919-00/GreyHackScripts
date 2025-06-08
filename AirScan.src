@@ -44,7 +44,6 @@ for ip in devices
     end if
 
     print("[" + ip + "]")
-    print("|- Open ports")
 
    if ports != null and ports.len > 0 then
         if metax != null then
@@ -57,11 +56,17 @@ for ip in devices
             end if
         end if
    else
-        print " |- N/A"
-        print " "
-        continue
+       ports = []
    end if
 
+    adminInfo = whois(ip)
+    adminInfoLines = adminInfo.split(coreKit.NEW_LINE)
+    print("|- Domain name: " + adminInfoLines[0].split(":")[1].trim)
+    if adminInfoLines.len > 1 then
+        print("|- Admin contact: " + adminInfoLines[1].split(":")[1].trim)
+        print("|- Admin email: " + adminInfoLines[2].split(":")[1].trim)
+    end if
+    print("|- Open ports")
     openPortsFound = false
     for port in ports
         if port.is_closed then continue
