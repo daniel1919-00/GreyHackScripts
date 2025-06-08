@@ -1,0 +1,57 @@
+// coreKit – a lightweight utility library for GreyScript.
+// Built by: _daniel1919 (https://github.com/daniel1919-00)
+// 
+// ------------------------------------
+// -                                  -
+// -        NETWORK UTILITIES         -
+// -                                  -
+// ------------------------------------
+
+coreKit.Network = {}
+coreKit.Network.portDescriptions = {
+    20: "FTP",
+    21: "FTP",
+    22: "SSH",
+    23: "Telnet",
+    25: "SMTP",
+    53: "DNS",
+    67: "DHCP",
+    68: "DHCP",
+    69: "TFTP",
+    80: "HTTP",
+    110: "POP3",
+    119: "NNTP",
+    123: "NTP",
+    135: "MS RPC",
+    137: "NetBIOS",
+    138: "NetBIOS",
+    139: "NetBIOS",
+    143: "IMAP",
+    161: "SNMP",
+    162: "SNMP Trap",
+    179: "BGP",
+    194: "IRC",
+    443: "HTTPS",
+    465: "SMTPS",
+    514: "Syslog",
+    587: "SMTP",
+    631: "IPP",
+    993: "IMAPS",
+    995: "POP3S",
+    1433: "MSSQL",
+    1521: "Oracle",
+    3306: "MySQL",
+    3389: "RDP",
+    5432: "PostgreSQL",
+    5900: "VNC",
+    6379: "Redis",
+    8080: "HTTP Alt",
+    8443: "HTTPS Alt"}
+
+coreKit.Network.getPortDesc = function(port)
+    if self.portDescriptions.hasIndex(port) then
+        return self.portDescriptions[port]
+    else
+        return "Unknown or Unassigned Port"
+    end if
+end function

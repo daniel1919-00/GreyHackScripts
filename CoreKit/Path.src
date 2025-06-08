@@ -1,0 +1,41 @@
+// coreKit – a lightweight utility library for GreyScript.
+// Built by: _daniel1919 (https://github.com/daniel1919-00)
+// 
+// ------------------------------------
+// -                                  -
+// -        PATH UTILITIES            -
+// -                                  -
+// ------------------------------------
+
+coreKit.Path = {}
+
+// 
+// Resolves a relative path to an absolute path.
+// 
+// @param string relativePath    The relative path to resolve (e.g. "./folder/file.txt").
+// @param string currentPath     (Optional) The base path to resolve from. If null, uses current working directory.
+// @return                       The resolved absolute path.
+// 
+coreKit.Path.resolve = function(relativePath, currentPath = null)
+	if relativePath[0] == "/" then
+		return relativePath  // already absolute
+	end if
+
+	if currentPath == null then
+		currentPath = current_path
+	end if
+
+	pathComponents = relativePath.split("/")
+
+	for component in pathComponents
+		if component == "." then
+			continue
+		else if component == ".." then
+			currentPath = parent_path(currentPath)
+		else
+			currentPath = currentPath + "/" + component
+		end if
+	end for
+
+	return currentPath
+end function

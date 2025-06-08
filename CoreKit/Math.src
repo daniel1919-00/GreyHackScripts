@@ -1,0 +1,42 @@
+// coreKit – a lightweight utility library for GreyScript.
+// Built by: _daniel1919 (https://github.com/daniel1919-00)
+// 
+// ------------------------------------
+// -                                  -
+// -        MATH UTILITIES            -
+// -                                  -
+// ------------------------------------
+
+coreKit.math = {}
+
+// Gets the maximum between numbers a and b
+// @param number a
+// @param number b
+// @return number
+coreKit.math.max = function(a, b)
+	if a > b then
+		return a
+	else 
+		return b
+	end if
+end function
+
+// Gets the minimum between numbers a and b
+// @param number a
+// @param number b
+// @return number
+coreKit.math.min = function(a, b)
+	if a < b then
+		return a
+	else 
+		return b
+	end if
+end function
+
+// Clamps a number between min and max.
+// @param number val Value to clamp
+// @param number minVal
+// @param number maxVal
+coreKit.math.clamp = function(val, minVal, maxVal)
+	return coreKit.math.max(minVal, coreKit.math.min(val, maxVal))
+end function

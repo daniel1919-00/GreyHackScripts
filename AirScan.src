@@ -1,0 +1,60 @@
+//
+// AirScan – A simple script to quickly scan the network for devices with open ports
+// Built by: _daniel1919 (https://github.com/daniel1919-00)
+//
+
+#import "CoreKit/CoreKit.src"
+
+coreKit.printHeader("AirScan", "_daniel1919", "A simple script to quickly scan the network " + coreKit.NEW_LINE + " for devices with open ports")
+
+metax = include_lib("/lib/metaxploit.so")
+if metax == null then
+    print("Metaxploit library(metaxploit.so) missing, some information will not be available!")
+end if
+
+router = get_router
+devices = router.devices_lan_ip
+for ip in devices
+   ports = router.device_ports(ip)
+
+    print("[" + ip + "]")
+    print("|- Open ports")
+
+   if ports.len then
+        if metax != null then
+            netSession = metax.net_use(ip, ports[0].port_number)
+            if netSession != null then
+                print("|- User accounts: " + netSession.get_num_users)
+                print("|- User Active: " + netSession.is_any_active_user)
+                print("|- Root Active: " + netSession.is_root_active_user)
+                print("|- Port forwards: " + netSession.get_num_portforward)
+            end if
+        end if
+   else
+        print " |- N/A"
+        print " "
+        continue
+   end if
+
+    openPortsFound = false
+    for port in ports
+        if port.is_closed then continue
+
+        openPortsFound = true
+
+        print(" |- " +  port.port_number + " -> " + coreKit.Network.getPortDesc(port.port_number))
+
+        if metax != null then
+            netSession = metax.net_use(ip, port.port_number)
+            if netSession != null then
+                metaLib = netSession.dump_lib
+                print "  |- Lib: " + metaLib.lib_name + " v" + metaLib.version
+            end if
+        end if
+    end for
+
+    if not openPortsFound then
+        print " |- N/A"
+    end if
+    print " "
+end for

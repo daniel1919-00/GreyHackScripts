@@ -1,17 +1,25 @@
-//
+// 
 // AirKit – A simple script to quickly obtain and connect to a vulnerable wifi network
 // Built by: _daniel1919 (https://github.com/daniel1919-00)
-//
+// 
 // Automates Wi-Fi network attacks by orchestrating airmon, aireplay, and aircrack.
-//
+// 
 
-#import "../_Shared/CoreKit.src"
+#import "CoreKit/CoreKit.src"
 
 crypto = include_lib("/lib/crypto.so")
 CurrentShell = get_shell
 HostComputer = CurrentShell.host_computer
 
-coreKit.printHeader("AirKit", "_daniel1919", "Handles airmon, aireplay and aircrack, " + coreKit.NEW_LINE + " so you don't have to.")
+coreKit.printHeader("AirKit", "_daniel1919", "Handles airmon, aireplay and aircrack, " + coreKit.NEW_LINE + " so you don't have to." + coreKit.NEW_LINE + coreKit.NEW_LINE + "Note: Use -a flag to toggle auto selection mode, " + coreKit.NEW_LINE + " this will sort all networks by strength " + coreKit.NEW_LINE + " and will attempt to hack each one,  " + coreKit.NEW_LINE + " only stopping at the first successful hack .")
+
+manualMode = true
+if coreKit.Cli.hasFlag("-a") then
+    manualMode = false
+    print "Operating mode: AUTO"
+else
+    print "Operating mode: MANUAL"
+end if
 
 networkInterface = user_input("Net interface(defaults to wlan0): ", false)
 if networkInterface == "" then
@@ -73,15 +81,39 @@ end for
 
 wifiTargets.sort("power", 0)
 
+if manualMode then
+    print "Select target network from the table below."
+    table = ["INDEX ESSID BSSID POWER POTENTIAL ACKS"]
+
+    wifiIndex = 0
+    for wifiTarget in wifiTargets
+        table.push(wifiIndex + " " + wifiTarget.essid + " " +  wifiTarget.bssid + " " +  wifiTarget.power + " " +  wifiTarget.potentialAcks)
+        wifiIndex = wifiIndex + 1
+    end for    
+
+    print(format_columns(table.join(coreKit.NEW_LINE)))
+    wifiIndex = user_input("Target network: ").to_int
+    if (typeof(wifiIndex) == "string" or wifiIndex < 0 or wifiIndex > wifiTargets.len - 1) then
+        exit("Invalid network index!")
+    end if
+
+    wifiTargets = [wifiTargets[wifiIndex]]
+end if
+
 for wifiTarget in wifiTargets
-     print "Attempting to crack the password for " + wifiTargetToFormattedText(wifiTarget)
+    print "Attempting to crack the password for " + wifiTargetToFormattedText(wifiTarget)
     wifiPassword = crackWifi(wifiTarget)
     if wifiPassword == null then
-        print "Failed to crack! Trying next network on list."
+        if manualMode then
+            print "Failed to crack network!"
+        else
+            print "Failed to crack network! Trying next network on list."
+        end if
+
         continue
     end if
 
-    connectToWifi = user_input("Wifi password found [" + wifiPassword + "], connect to wifi? [y/n] ").lower == "y"
+    connectToWifi = user_input("Wifi password found [" + wifiPassword + "], connect to this network? [y/n] ").lower == "y"
 
     if connectToWifi then
         connectionResult = HostComputer.connect_wifi(networkInterface, wifiTarget.bssid, wifiTarget.essid, wifiPassword)
