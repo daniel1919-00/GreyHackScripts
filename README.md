@@ -10,7 +10,7 @@ A collection of scripts made for [Grey Hack](https://store.steampowered.com/app/
 ## Installing scripts
 Note that all the scripts on this repository should be compiled using the `prepkit` script.
 
-Simply compile prepkit normally using the game's code editor, and the just use the prepkit command like so: `prepkit AirKit.src -o /bin`
+Simply compile prepkit normally using the game's code editor, and then just use the prepkit command like so: `prepkit AirKit.src -o /bin`
 
 ## Useful resources
 - [Incredible documentation for GreyScript API](https://documentation.greyscript.org)
