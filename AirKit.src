@@ -21,13 +21,35 @@ else
     print "Operating mode: MANUAL"
 end if
 
-networkInterface = user_input("Net interface(defaults to wlan0): ", false)
-if networkInterface == "" then
-	networkInterface = "wlan0"
+devices = HostComputer.network_devices
+deviceList = devices.trim.split(coreKit.NEW_LINE)
+
+if deviceList.len == 0 then
+    exit("No network devices found on this system!")
+end if
+
+if deviceList.len > 1 then
+    print "Multiple network devices found ("+deviceList.len+")!"
+    table = ["INTERFACE CHIPSET MONITORING_SUPPORT"]
+    for device in deviceList
+        table.push(device)
+    end for
+    print(format_columns(table.join(coreKit.NEW_LINE)))
+
+    networkInterface = user_input("Net interface(empty for wlan0): ", false)
+    if networkInterface == "" then
+        networkInterface = "wlan0"
+    end if
+else
+    networkInterface = deviceList[0].split(" ")[0]
 end if
 
 networks = HostComputer.wifi_networks(networkInterface)
 print "Scanning for WIFI networks on ["+networkInterface+"]..."
+
+if networks == null or not networks.len then
+    exit("No networks where found on the given network interface ["+networkInterface+"]!")
+end if
 
 wifiEntryToInfo = function(wifiEntry)
     parsed = wifiEntry.split(" ")
@@ -94,7 +116,7 @@ if manualMode then
     print(format_columns(table.join(coreKit.NEW_LINE)))
     wifiIndex = user_input("Target network: ").to_int
     if (typeof(wifiIndex) == "string" or wifiIndex < 0 or wifiIndex > wifiTargets.len - 1) then
-        exit("Invalid network index!")
+        wifiIndex = 0
     end if
 
     wifiTargets = [wifiTargets[wifiIndex]]
