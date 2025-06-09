@@ -2,7 +2,7 @@
 // Built by: _daniel1919 (https://github.com/daniel1919-00)
 // 
 // Enables modular code organization via `#import` directives.
-// - Entry file uses native `import _code()` to avoid text size limits.
+// - Entry file uses native `import_code` to avoid text size limits.
 // - Nested imports are fully inlined, supporting deep includes and relative paths.
 // 
 // Supports:
@@ -19,6 +19,7 @@
 //   -i          Allow use of native `import_code` at top level
 //   -c          Preserve script name case (defaults to lowercase)
 
+print ""
 if params.len == 0 then
 	print "prepkit – a hybrid C-style preprocessor for GreyScript."
 	print "Enables modular code organization via `#import` directives."
@@ -37,6 +38,8 @@ end if
 NEW_LINE = char(10)
 CurrentShell = get_shell
 HostComputer = CurrentShell.host_computer
+
+scriptStartTime = time
 
 CLI_FLAGS = {}
 i = 0
@@ -93,77 +96,92 @@ resolvePath = function(relativePath, currentPath = null)
 	return currentPath
 end function
 
+formatTime = function(seconds)
+	if seconds >= 1 then
+        return seconds + "s"
+	else
+        return (seconds * 1000) + "ms"
+	end if
+end function
+
 // Preps file for compilation.
 // 
 // @param File file    The file to process
-// @param string dest  Destination folder path for output
+// @param string outputDest  Destination folder path for output
 // @return File        The prepped output file
 // 
-prepFile = function(file, dest, nestingLevel = 0)
+prepFile = function(file, outputDest, nestingLevel = 0)
 	if not file.has_permission("r") then
 		exit("Can not read file [" + file.path + "]: Read permission denied!")
 	end if
 
-	if nestingLevel != 0 then
-		print "Linking import [" + file.name + "]"
+    nestLevelIndent = ""
+	if nestingLevel == 0 then
+        print "Processing entrypoint [" + file.name + "]"
+    else
+        nestLevelIndent = "  " * (nestingLevel - 1)
+		print nestLevelIndent + "|- Linking [" + file.name + "]"
 	end if
 
 	fileContents = file.get_content
 	outputLines = []
 	lines = fileContents.split(NEW_LINE)
-	
+	currentLine = 0;
+
 	for line in lines
         line = line.trim
+        currentLine = currentLine + 1
         // Skip empty lines and comments
         if line == "" or line[0] == "/" then
             continue
         end if
 
-        lineContainsImport = line.indexOf("#import") != null
-		if lineContainsImport then
+        // Process #import directive
+		if line.indexOf("#import") != null then
 			startQuote = line.indexOf("""")
 			endQuote = line.lastIndexOf("""")
 			
 			if startQuote == null or endQuote == null or endQuote <= startQuote then
-				exit("Invalid #import syntax in [" + file.path + "]:" + (outputLines.len + 1))
+				exit(nestLevelIndent + "|- Invalid #import syntax in [" + file.path + "]:" + currentLine)
 			end if
 
 			importPath = slice(line, startQuote + 1, endQuote).trim
-			
+			 
 			if importPath.indexOf(".src") == null then
 				importPath = importPath + ".src"
 			end if
 			
 			importResolvedPath = resolvePath(importPath, file.parent.path)
-			importedFile = HostComputer.File(importResolvedPath)
-			if not importedFile then
-				exit("Failed to import [" + importResolvedPath + "] in [" + file.path + "]:" + (outputLines.len + 1))
+			importFile = HostComputer.File(importResolvedPath)
+			if not importFile then
+				exit(nestLevelIndent + "|- Failed to import [" + importResolvedPath + "] in [" + file.path + "]:" + currentLine)
 			end if
 		
+            // Preprocess the imported files first
+            importedFile = prepFile(importFile, outputDest, nestingLevel + 1)
+
 			if nestingLevel == 0 then
-				importedFile = prepFile(importedFile, dest, nestingLevel + 1)
-				outputLines.push("import" + "_code(""" + importedFile.path + """)") // The compiler sees "import_code" text and freaks out :D, so we split the word
+				outputLines.push("import_code" + "(""" + importedFile.path + """)") // The compiler sees "import_code" text and freaks out :D
 			else
-                importLines = prepFile(importedFile, dest, nestingLevel + 1)
-                for importLine in importLines
+                for importLine in importedFile
                     outputLines.push(importLine)
                 end for
 			end if
-		else
-			outputLines.push(line)
+
+            continue
 		end if
+
+        outputLines.push(line)
 	end for
 	
-    // Because starting from the first nest level, all imports are inlined, we make a copy of the original files
-    // And move them next to the source file, starting with the level 2 nest level everything is inlined, 
-    // and the file location does not matter anymore
+    // The _first_ nest level uses "import_code" function, so we need to make a copy of the original imported files (processed on the _second_ nest level) and move them in the same output destination as the main source file. 
+    // Starting with the _second_ nest level, everything is inlined, and the file location becomes irrelevant (except for the _second_ level itself because it is referenced in the main source file)
 	if nestingLevel < 2 then
-        outputDest = dest + "/prepkit_out"
         outputFileName = file.name
 
         if nestingLevel == 0 then
             if not HostComputer.File(outputDest) then
-                HostComputer.create_folder(dest, "prepkit_out")
+                HostComputer.create_folder(dest, outputDest)
             end if
 
             if not CLI_FLAGS.hasIndex("-c") then
@@ -188,10 +206,9 @@ prepFile = function(file, dest, nestingLevel = 0)
 			
 		outputFile.set_content(outputLines.join(NEW_LINE))	
 		return outputFile
-	else
-		return outputLines
 	end if
 
+    return outputLines
 end function
 
 sourceFilePath = resolvePath(params[0])
@@ -224,7 +241,7 @@ if dryRun then
 	print "Dry run: inlining imports without final build output."
 end if
 
-inlinedSourceCodeFile = prepFile(sourceFile, sourceFile.parent.path)
+inlinedSourceCodeFile = prepFile(sourceFile, sourceFile.parent.path + "/" + "PREPKIT_OUT_" + sourceFile.name[0:-4])
 inlinedSourceCodeFileName = inlinedSourceCodeFile.name[0:-4]
 
 if not dryRun then
@@ -238,3 +255,5 @@ if not dryRun then
 
 	print "Binary compiled: " + destinationPath + "/" + inlinedSourceCodeFileName
 end if
+
+print "Processing finished in " + formatTime(time - scriptStartTime)

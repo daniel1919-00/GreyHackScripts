@@ -1,16 +1,20 @@
 # Grey Hack Scripts
 A collection of scripts made for [Grey Hack](https://store.steampowered.com/app/605230/Grey_Hack/).
 
-## Available scripts
-- `CoreKit` - A collection of small utilities and helpers. All my scripts will generally include this one except for PrepKit.
-- `PrepKit` - A hybrid C-style preprocessor for GreyScript.
-- `AirKit` - A simple script to quickly obtain and connect to a vulnerable wifi network
-- `AirScan` - A simple script to quickly scan the network for devices with open ports
+## Scripts
+- `PrepKit` - Hybrid C-style preprocessor for GreyScript. Required to compile the other scripts.
+- `CoreKit` - Core utilities and helpers. Used by most scripts (except PrepKit itself).
+- `AirKit` - Quickly finds and connects to a vulnerable WiFi network.
+- `AirScan` - Scans the network (or target IP address) and provides extensive information (open ports and used libraries for each, number of available accounts, etc.).
 
-## Installing scripts
-Note that all the scripts on this repository should be compiled using the `prepkit` script.
+## Installation
+All scripts are intended to be compiled with `PrepKit`.
 
-Simply compile prepkit normally using the game's code editor, and then just use the prepkit command like so: `prepkit AirKit.src -o /bin`
+1. Compile `PrepKit.src` (e.g., into /bin) using the in-game code editor.
+2. Then use it to compile other scripts. Example:
+    ```shell
+    prepkit AirKit.src -o /bin
+    ```
 
-## Useful resources
-- [Incredible documentation for GreyScript API](https://documentation.greyscript.org)
+## Resources
+- [GreyScript API Documentation](https://documentation.greyscript.org)
