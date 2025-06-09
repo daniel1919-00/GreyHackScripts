@@ -15,23 +15,27 @@
 // 
 // Options:
 //   -o <path>   Output folder path (default: alongside source)
-//   -d          Dry run — process and merge files, but don’t write output
-//   -i          Allow use of native `import_code` at top level
-//   -c          Preserve script name case (defaults to lowercase)
+//   -d          Dry run: process files without compiling the binary
+//   -i          Compiled binary can be imported in scripts
+//   -c          Preserve entrypoint script name case
 
 print ""
+print ""
+print ""
+print "##########################################################"
+print "# PrepKit - A hybrid C-style preprocessor for GreyScript."
+print "##########################################################"
+print ""
+
 if params.len == 0 then
-	print "prepkit – a hybrid C-style preprocessor for GreyScript."
-	print "Enables modular code organization via `#import` directives."
-	print ""
 	print "Usage:"
 	print "  prepkit [source file path] [options]"
 	print ""
 	print "Options:"
-	print "  -o <output_folder> Specify output directory (default: source file's folder)"
-	print "  -d                 Dry run: inline imports without final compilation"
-	print "  -i                 Allow native import_code at top level"
-    print "  -c                 Preserve script name case"
+	print " -o <path> Specify output directory"
+	print " -d        Dry run: process files without compilation"
+	print " -i        Compiled binary can be imported in scripts"
+    print " -c        Preserve entrypoint script name case"
 	exit()
 end if
 
@@ -111,16 +115,15 @@ end function
 // @return File        The prepped output file
 // 
 prepFile = function(file, outputDest, nestingLevel = 0)
-	if not file.has_permission("r") then
-		exit("Can not read file [" + file.path + "]: Read permission denied!")
-	end if
-
     nestLevelIndent = ""
 	if nestingLevel == 0 then
         print "Processing entrypoint [" + file.name + "]"
     else
-        nestLevelIndent = "  " * (nestingLevel - 1)
-		print nestLevelIndent + "|- Linking [" + file.name + "]"
+        nestLevelIndent = "  " * nestingLevel
+	end if
+
+    if not file.has_permission("r") then
+		exit(nestLevelIndent + "|- Can not read file [" + file.path + "]: Permission denied!")
 	end if
 
 	fileContents = file.get_content
@@ -157,11 +160,13 @@ prepFile = function(file, outputDest, nestingLevel = 0)
 				exit(nestLevelIndent + "|- Failed to import [" + importResolvedPath + "] in [" + file.path + "]:" + currentLine)
 			end if
 		
+            print nestLevelIndent + "|- Linking [" + importFile.name + "]"
+            
             // Preprocess the imported files first
             importedFile = prepFile(importFile, outputDest, nestingLevel + 1)
 
 			if nestingLevel == 0 then
-				outputLines.push("import_code" + "(""" + importedFile.path + """)") // The compiler sees "import_code" text and freaks out :D
+				outputLines.push("import_code" + "(""" + importedFile.path + """)") // The compiler sees "import_code" with a parenthesis next to it and freaks out :D
 			else
                 for importLine in importedFile
                     outputLines.push(importLine)
@@ -179,14 +184,8 @@ prepFile = function(file, outputDest, nestingLevel = 0)
 	if nestingLevel < 2 then
         outputFileName = file.name
 
-        if nestingLevel == 0 then
-            if not HostComputer.File(outputDest) then
-                HostComputer.create_folder(dest, outputDest)
-            end if
-
-            if not CLI_FLAGS.hasIndex("-c") then
-                outputFileName = outputFileName.lower
-            end if
+        if nestingLevel == 0 and not CLI_FLAGS.hasIndex("-c") then
+            outputFileName = outputFileName.lower
         end if
 
 		outputPath = outputDest + "/" + outputFileName
@@ -195,11 +194,11 @@ prepFile = function(file, outputDest, nestingLevel = 0)
 		if outputFile == null then
 			outputFileTouchResult = HostComputer.touch(outputDest, outputFileName)
 			if outputFileTouchResult != 1 then
-				exit("Failed to create output file [" + outputPath + "]: " + outputFileTouchResult)
+				exit(nestLevelIndent + "|- Failed to create output file [" + outputPath + "]: " + outputFileTouchResult)
 			else
 				outputFile = HostComputer.File(outputPath)
 				if outputFile == null then
-					exit("Failed to open output file: " + outputPath)
+					exit(nestLevelIndent + "|- Failed to open output file [" + outputPath + "]")
 				end if
 			end if
 		end if 
@@ -238,16 +237,23 @@ end if
 
 dryRun = CLI_FLAGS.hasIndex("-d")
 if dryRun then
-	print "Dry run: inlining imports without final build output."
+	print "Running in [DRY] mode: Processing files without compiling the binary!"
 end if
 
-inlinedSourceCodeFile = prepFile(sourceFile, sourceFile.parent.path + "/" + "PREPKIT_OUT_" + sourceFile.name[0:-4])
-inlinedSourceCodeFileName = inlinedSourceCodeFile.name[0:-4]
+outputDestDirName = "PREPKIT_OUT_" + sourceFile.name[0:-4]
+outputDestPath = sourceFile.parent.path + "/" + outputDestDirName
+
+if not HostComputer.File(outputDestPath) then
+    HostComputer.create_folder(sourceFile.parent.path, outputDestDirName)
+end if
+
+processedFile = prepFile(sourceFile, outputDestPath)
+inlinedSourceCodeFileName = processedFile.name[0:-4]
 
 if not dryRun then
 	print("Compiling binary...")
-	buildErrors = CurrentShell.build(inlinedSourceCodeFile.path, destinationPath, CLI_FLAGS.hasIndex("-i"))
-	inlinedSourceCodeFile.parent.delete
+	buildErrors = CurrentShell.build(processedFile.path, destinationPath, CLI_FLAGS.hasIndex("-i"))
+	processedFile.parent.delete
 		
 	if buildErrors != "" then
 		exit("Build failed: " + buildErrors)

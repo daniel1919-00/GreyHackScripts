@@ -41,6 +41,8 @@ coreKit.printHeader = function(programName, author, description = "")
 	borderLine = "# " + border
 
 	print ""
+	print ""
+	print ""
 	print borderLine
 	for line in lines
 		print line
