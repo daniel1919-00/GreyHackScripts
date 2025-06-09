@@ -98,9 +98,9 @@ end function
 
 formatTime = function(seconds)
 	if seconds >= 1 then
-        return seconds + "s"
+        return round(seconds * 100) / 100 + "s"
 	else
-        return (seconds * 1000) + "ms"
+        return round(seconds * 100000) / 100 + "ms"
 	end if
 end function
 
