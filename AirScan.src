@@ -9,16 +9,19 @@ coreKit.printHeader("AirScan", "_daniel1919", "A simple script to quickly scan t
 
 metax = include_lib("/lib/metaxploit.so")
 if metax == null then
-    print("Metaxploit library(metaxploit.so) missing, some information will not be available!")
+    coreKit.printWarning("Metaxploit library(metaxploit.so) missing, some information will not be available!")
+else
+    coreKit.printOk("Metaxploit library loaded, additional information will be available.")
 end if
 
 if params.len > 0 then
     targetIp = params[0]
     if is_valid_ip(targetIp) == 0 then
-        exit("Invalid ip given ["+targetIp+"]!")
+        coreKit.printError("Invalid ip given ["+targetIp+"]!")
+        exit
     end if
 
-    print("Fetching details for target IP ["+targetIp+"]")
+    coreKit.print("Fetching details for target IP ["+targetIp+"]")
 
     if is_lan_ip(targetIp) then
         router = get_router
@@ -27,7 +30,8 @@ if params.len > 0 then
     end if
 
     if router == null then
-        exit("IP address not found [" + targetIp + "]")
+        coreKit.printError("IP address not found [" + targetIp + "]")
+        exit
     end if
 
     devices = [targetIp]
@@ -43,16 +47,16 @@ for ip in devices
         ports = router.device_ports(ip)
     end if
 
-    print("[" + ip + "]")
+    coreKit.print("[" + ip + "]")
 
    if ports != null and ports.len > 0 then
         if metax != null then
             netSession = metax.net_use(ip, ports[0].port_number)
             if netSession != null then
-                print("|- User accounts: " + netSession.get_num_users)
-                print("|- User Active: " + netSession.is_any_active_user)
-                print("|- Root Active: " + netSession.is_root_active_user)
-                print("|- Port forwards: " + netSession.get_num_portforward)
+                coreKit.print("|- User accounts: " + netSession.get_num_users)
+                coreKit.print("|- User Active: " + netSession.is_any_active_user)
+                coreKit.print("|- Root Active: " + netSession.is_root_active_user)
+                coreKit.print("|- Port forwards: " + netSession.get_num_portforward)
             end if
         end if
    else
@@ -61,31 +65,31 @@ for ip in devices
 
     adminInfo = whois(ip)
     adminInfoLines = adminInfo.split(coreKit.NEW_LINE)
-    print("|- Domain name: " + adminInfoLines[0].split(":")[1].trim)
+    coreKit.print("|- Domain name: " + adminInfoLines[0].split(":")[1].trim)
     if adminInfoLines.len > 1 then
-        print("|- Admin contact: " + adminInfoLines[1].split(":")[1].trim)
-        print("|- Admin email: " + adminInfoLines[2].split(":")[1].trim)
+        coreKit.print("|- Admin contact: " + adminInfoLines[1].split(":")[1].trim)
+        coreKit.print("|- Admin email: " + adminInfoLines[2].split(":")[1].trim)
     end if
-    print("|- Open ports")
+    coreKit.print("|- Open ports")
     openPortsFound = false
     for port in ports
         if port.is_closed then continue
 
         openPortsFound = true
 
-        print(" |- " +  port.port_number + " -> " + coreKit.Network.getPortDesc(port.port_number))
+        coreKit.print(" |- " +  port.port_number + " -> " + coreKit.Network.getPortDesc(port.port_number))
 
         if metax != null then
             netSession = metax.net_use(ip, port.port_number)
             if netSession != null then
                 metaLib = netSession.dump_lib
-                print("  |- Lib: " + metaLib.lib_name + " v" + metaLib.version)
+                coreKit.print("  |- Lib: " + metaLib.lib_name + " v" + metaLib.version)
             end if
         end if
     end for
 
     if not openPortsFound then
-        print(" |- N/A")
+        coreKit.print(" |- N/A")
     end if
     print(" ")
 end for

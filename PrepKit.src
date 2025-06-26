@@ -1,20 +1,35 @@
-print("")
-print("")
-print("")
-print("##########################################################")
-print("# PrepKit - A hybrid C-style preprocessor for GreyScript.")
-print("##########################################################")
-print("")
+printInfo = function(message)
+    print("<color=#80CFFF>" + message)
+end function
+
+printOk = function(message)
+    print("<color=#7CFC98>" + message)
+end function
+
+printWarning = function(message)
+    print("<color=#FFE066>" + message)
+end function
+
+printError = function(message)
+    print("<color=#FF7C7C>" + message)
+end function
+
+printInfo("")
+printInfo("")
+printInfo("##########################################################")
+printInfo("# PrepKit - A hybrid C-style preprocessor for GreyScript.")
+printInfo("##########################################################")
+printInfo("")
 
 if params.len == 0 then
-    print("Usage:")
-    print("  prepkit [source file path] [options]")
-    print("")
-    print("Options:")
-    print(" -o <path> Specify output directory")
-    print(" -d        Dry run: process files without compilation")
-    print(" -i        Compiled binary can be imported in scripts")
-    print(" -c        Preserve entrypoint script name case")
+    printInfo("Usage:")
+    printInfo("  prepkit [source file path] [options]")
+    printInfo("")
+    printInfo("Options:")
+    printInfo(" -o <path> Specify output directory")
+    printInfo(" -d        Dry run: process files without compilation")
+    printInfo(" -i        Compiled binary can be imported in scripts")
+    printInfo(" -c        Preserve entrypoint script name case")
     exit()
 end if
 
@@ -96,13 +111,14 @@ end function
 prepFile = function(file, outputDest, nestingLevel = 0)
     nestLevelIndent = ""
     if nestingLevel == 0 then
-        print("Processing entrypoint [" + file.name + "]")
+        printInfo("Processing entrypoint [" + file.name + "]")
     else
         nestLevelIndent = "  " * nestingLevel
     end if
 
     if not file.has_permission("r") then
-        exit(nestLevelIndent + "|- Can not read file [" + file.path + "]: Permission denied!")
+        printError(nestLevelIndent + "|- Can not read file [" + file.path + "]: Permission denied!")
+        exit()
     end if
 
     fileContents = file.get_content
@@ -124,7 +140,8 @@ prepFile = function(file, outputDest, nestingLevel = 0)
             endQuote = line.lastIndexOf("""")
             
             if startQuote == null or endQuote == null or endQuote <= startQuote then
-                exit(nestLevelIndent + "|- Invalid #import syntax in [" + file.path + "]:" + currentLine)
+                printError(nestLevelIndent + "|- Invalid #import syntax in [" + file.path + "]:" + currentLine)
+                exit()
             end if
 
             importPath = slice(line, startQuote + 1, endQuote).trim
@@ -136,10 +153,11 @@ prepFile = function(file, outputDest, nestingLevel = 0)
             importResolvedPath = resolvePath(importPath, file.parent.path)
             importFile = HostComputer.File(importResolvedPath)
             if not importFile then
-                exit(nestLevelIndent + "|- Failed to import [" + importResolvedPath + "] in [" + file.path + "]:" + currentLine)
+                printError(nestLevelIndent + "|- Import file [" + importResolvedPath + "] not found in [" + file.path + "]:" + currentLine)
+                exit()
             end if
         
-            print(nestLevelIndent + "|- Linking [" + importFile.name + "]")
+            printInfo(nestLevelIndent + "|- Linking [" + importFile.name + "]")
             
             // Preprocess the imported files first
             importedFile = prepFile(importFile, outputDest, nestingLevel + 1)
@@ -173,11 +191,13 @@ prepFile = function(file, outputDest, nestingLevel = 0)
         if outputFile == null then
             outputFileTouchResult = HostComputer.touch(outputDest, outputFileName)
             if outputFileTouchResult != 1 then
-                exit(nestLevelIndent + "|- Failed to create output file [" + outputPath + "]: " + outputFileTouchResult)
+                printError(nestLevelIndent + "|- Failed to create output file [" + outputPath + "]: " + outputFileTouchResult)
+                exit()
             else
                 outputFile = HostComputer.File(outputPath)
                 if outputFile == null then
-                    exit(nestLevelIndent + "|- Failed to open output file [" + outputPath + "]")
+                    printError(nestLevelIndent + "|- Failed to create output file [" + outputPath + "]")
+                    exit()
                 end if
             end if
         end if 
@@ -192,11 +212,13 @@ end function
 sourceFilePath = resolvePath(params[0])
 sourceFile = HostComputer.File(sourceFilePath)
 if not sourceFile then
-    exit("Path Error: '" + sourceFilePath + "' is invalid!")
+    printError("Path Error: '" + sourceFilePath + "' is invalid!")
+    exit()
 end if
 
 if sourceFile.is_folder then
-    exit("Path Error: '" + sourceFilePath + "' is a directory, expected a file.")
+    printError("Path Error: '" + sourceFilePath + "' is a directory, expected a file.")
+    exit()
 end if 
 
 destinationPath = sourceFile.parent.path
@@ -204,11 +226,13 @@ if CLI_FLAGS.hasIndex("-o") then
     destinationResolvedPath = resolvePath(CLI_FLAGS["-o"])
     destinationPath = HostComputer.File(destinationResolvedPath)
     if not destinationPath then
-        exit("Path Error: destination path ['" + destinationResolvedPath + "'] is invalid!")
+        printError("Path Error: destination path ['" + destinationResolvedPath + "'] is invalid!")
+        exit()
     end if
 
     if not destinationPath.is_folder then
-        exit("Path Error: '" + destinationPath.path + "' is a file, expected a directory.")
+        printError("Path Error: '" + destinationPath.path + "' is a file, expected a directory.")
+        exit()
     end if 
 
     destinationPath = destinationPath.path
@@ -216,7 +240,7 @@ end if
 
 dryRun = CLI_FLAGS.hasIndex("-d")
 if dryRun then
-    print("Running in [DRY] mode: Processing files without compiling the binary!")
+    printWarning("Running in [DRY] mode: Processing files without compiling the binary!")
 end if
 
 outputDestDirName = "PREPKIT_OUT_" + sourceFile.name[0:-4]
@@ -230,15 +254,16 @@ processedFile = prepFile(sourceFile, outputDestPath)
 inlinedSourceCodeFileName = processedFile.name[0:-4]
 
 if not dryRun then
-    print("Compiling binary...")
+    printInfo("Compiling binary...")
     buildErrors = CurrentShell.build(processedFile.path, destinationPath, CLI_FLAGS.hasIndex("-i"))
     processedFile.parent.delete
         
     if buildErrors != "" then
-        exit("Build failed: " + buildErrors)
+        printError("Build failed: " + buildErrors)
+        exit()
     end if
 
-    print("Binary compiled: " + destinationPath + "/" + inlinedSourceCodeFileName)
+    printOk("Binary compiled: " + destinationPath + "/" + inlinedSourceCodeFileName)
 end if
 
-print("Processing finished in " + formatTime(time - scriptStartTime))
+printOk("Processing finished in " + formatTime(time - scriptStartTime))

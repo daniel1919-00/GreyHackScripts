@@ -1,3 +1,14 @@
+//
+// AirPwn – A simple script intented for hacking target machines
+// Built by: _daniel1919 (https://github.com/daniel1919-00)
+//
+
 #import "CoreKit/CoreKit.src"
 
 coreKit.printHeader("AirPwn", "_daniel1919")
+
+metax = include_lib("/lib/metaxploit.so")
+if metax == null then
+    coreKit.printError("Metaxploit library(metaxploit.so) missing!")
+    exit
+end if

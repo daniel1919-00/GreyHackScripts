@@ -16,25 +16,26 @@ coreKit.printHeader("AirKit", "_daniel1919", "Handles airmon, aireplay and aircr
 manualMode = true
 if coreKit.Cli.hasFlag("-a") then
     manualMode = false
-    print("Operating mode: AUTO")
+    coreKit.print("Operating mode: AUTO")
 else
-    print("Operating mode: MANUAL")
+    coreKit.print("Operating mode: MANUAL")
 end if
 
 devices = HostComputer.network_devices
 deviceList = devices.trim.split(coreKit.NEW_LINE)
 
 if deviceList.len == 0 then
-    exit("No network devices found on this system!")
+    coreKit.printError("No network devices found on this system!")
+    exit()
 end if
 
 if deviceList.len > 1 then
-    print("Multiple network devices found ("+deviceList.len+")!")
+    coreKit.printWarning("Multiple network devices found ("+deviceList.len+")!")
     table = ["INTERFACE CHIPSET MONITORING_SUPPORT"]
     for device in deviceList
         table.push(device)
     end for
-    print(format_columns(table.join(coreKit.NEW_LINE)))
+    coreKit.print(format_columns(table.join(coreKit.NEW_LINE)))
 
     networkInterface = user_input("Net interface(empty for wlan0): ", false)
     if networkInterface == "" then
@@ -45,10 +46,11 @@ else
 end if
 
 networks = HostComputer.wifi_networks(networkInterface)
-print("Scanning for WIFI networks on ["+networkInterface+"]...")
+coreKit.print("Scanning for WIFI networks on ["+networkInterface+"]...")
 
 if networks == null or not networks.len then
-    exit("No networks where found on the given network interface ["+networkInterface+"]!")
+    coreKit.printError("No networks where found on the given network interface ["+networkInterface+"]!")
+    exit()
 end if
 
 wifiEntryToInfo = function(wifiEntry)
@@ -63,20 +65,23 @@ end function
 crackWifi = function(targetNetwork)
     airmonResult = crypto.airmon("start", networkInterface)
     if typeof(airmonResult) == "string" then
-    exit("There was an error while switching monitoring mode: " + airmonResult)
+        coreKit.printError("There was an error while switching monitoring mode: " + airmonResult)
+        exit()
     end if
 
     aireplayResult = crypto.aireplay(targetNetwork.bssid, targetNetwork.essid, targetNetwork.potentialAcks)
     crypto.airmon("stop", networkInterface)
 
     if aireplayResult != null then
-        exit("aireplay error: " + aireplayResult)
+        coreKit.printError("aireplay error: " + aireplayResult)
+        exit()
     end if
 
     aireplayOutputFile = HostComputer.File("file.cap")
 
     if aireplayOutputFile == null then
-        exit("Failed to find aireplay output file.cap!")
+        coreKit.printError("Failed to find aireplay output file.cap!")
+        exit()
     end if
 
     wifiPassword = crypto.aircrack(aireplayOutputFile.path)
@@ -104,7 +109,7 @@ end for
 wifiTargets.sort("power", 0)
 
 if manualMode then
-    print("Select target network from the table below.")
+    coreKit.print("Select target network from the table below.")
     table = ["INDEX ESSID BSSID POWER POTENTIAL ACKS"]
 
     wifiIndex = 0
@@ -113,10 +118,10 @@ if manualMode then
         wifiIndex = wifiIndex + 1
     end for    
 
-    print(format_columns(table.join(coreKit.NEW_LINE)))
+    coreKit.print(format_columns(table.join(coreKit.NEW_LINE)))
     wifiIndex = user_input("Target network index: ").to_int
     if typeof(wifiIndex) != "number" or (wifiIndex < 0 or wifiIndex > wifiTargets.len - 1) then
-        print("Invalid index entered, using index 0.")
+        coreKit.printWarning("Invalid index entered, using index 0.")
         wifiIndex = 0
     end if
 
@@ -124,13 +129,13 @@ if manualMode then
 end if
 
 for wifiTarget in wifiTargets
-    print("Attempting to crack the password for " + wifiTargetToFormattedText(wifiTarget))
+    coreKit.print("Attempting to crack the password for " + wifiTargetToFormattedText(wifiTarget))
     wifiPassword = crackWifi(wifiTarget)
     if wifiPassword == null then
         if manualMode then
-            print("Failed to crack network!")
+            coreKit.printError("Failed to crack network!")
         else
-            print("Failed to crack network! Trying next network on list.")
+            coreKit.printWarning("Failed to crack network! Trying next network on list.")
         end if
 
         continue
@@ -142,9 +147,9 @@ for wifiTarget in wifiTargets
         connectionResult = HostComputer.connect_wifi(networkInterface, wifiTarget.bssid, wifiTarget.essid, wifiPassword)
 
         if typeof(connectionResult) == "string" then
-            print("There was an error while connecting to new Wifi: " + connectionResult)
+            coreKit.printError("There was an error while connecting to new Wifi: " + connectionResult)
         else
-            print("Connected to new Wifi ["+ wifiTarget.essid +"] successfully.")
+            coreKit.printOk("Connected to new Wifi ["+ wifiTarget.essid +"] successfully.")
         end if
     end if
 

@@ -9,6 +9,22 @@
 
 coreKit.NEW_LINE = char(10)
 
+coreKit.printOk = function(message)
+    print("<color=#7CFC98>" + message)
+end function
+
+coreKit.printError = function(message)
+    print("<color=#FF7C7C>" + message)
+end function
+
+coreKit.printWarning = function(message)
+    print("<color=#FFE066>" + message)
+end function
+
+coreKit.print = function(message)
+    print("<color=#80CFFF>" + message)
+end function
+
 // Prints a formatted program header block.
 // 
 // @param string programName     Name of the program.
@@ -21,7 +37,6 @@ coreKit.printHeader = function(programName, author, description = "")
     lines.push("#")
     
     if description != "" then
-        // Assume that new lines could be added in the description
         descLines = description.split(coreKit.NEW_LINE)
         for descLine in descLines
             lines.push("# " + descLine.trim)
@@ -40,13 +55,12 @@ coreKit.printHeader = function(programName, author, description = "")
     border = "=" * (maxLen - 2)
     borderLine = "# " + border
 
-    print("")
-    print("")
-    print("")
-    print(borderLine)
+    coreKit.print("")
+    coreKit.print("")
+    coreKit.print(borderLine)
     for line in lines
-        print(line)
+        coreKit.print(line)
     end for
-    print(borderLine)
-    print("")
+    coreKit.print(borderLine)
+    coreKit.print("")
 end function
