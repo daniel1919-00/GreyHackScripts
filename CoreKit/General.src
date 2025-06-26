@@ -1,5 +1,5 @@
 // coreKit – a lightweight utility library for GreyScript.
-// Built by: _daniel1919 (https://github.com/daniel1919-00)
+// Author: _daniel1919 (https://github.com/daniel1919-00)
 // 
 // ------------------------------------
 // -                                  -
@@ -33,7 +33,7 @@ end function
 coreKit.printHeader = function(programName, author, description = "")
     lines = []
     lines.push("# " + programName)
-    lines.push("# Assembled by: " + author)
+    lines.push("# Coded by: " + author)
     lines.push("#")
     
     if description != "" then

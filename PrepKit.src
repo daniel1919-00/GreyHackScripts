@@ -17,7 +17,9 @@ end function
 printInfo("")
 printInfo("")
 printInfo("##########################################################")
-printInfo("# PrepKit - A hybrid C-style preprocessor for GreyScript.")
+printInfo("# PrepKit - A simple C-style preprocessor for GreyScript.")
+printInfo("#")
+printInfo("# Coded by: _daniel1919(https://github.com/daniel1919-00)")
 printInfo("##########################################################")
 printInfo("")
 

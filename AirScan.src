@@ -1,11 +1,11 @@
 //
 // AirScan – A simple script to quickly scan the network for devices with open ports
-// Built by: _daniel1919 (https://github.com/daniel1919-00)
+// Author: _daniel1919 (https://github.com/daniel1919-00)
 //
 
 #import "CoreKit/CoreKit.src"
 
-coreKit.printHeader("AirScan", "_daniel1919", "A simple script to quickly scan the network " + coreKit.NEW_LINE + " for devices with open ports." + coreKit.NEW_LINE + coreKit.NEW_LINE + "Note: Pass an ip to target specific machines.")
+coreKit.printHeader("AirScan", "_daniel1919(https://github.com/daniel1919-00)", "A simple script to quickly scan the network " + coreKit.NEW_LINE + " for devices with open ports." + coreKit.NEW_LINE + coreKit.NEW_LINE + "Note: Pass an ip to target specific machines.")
 
 metax = include_lib("/lib/metaxploit.so")
 if metax == null then
@@ -53,10 +53,10 @@ for ip in devices
         if metax != null then
             netSession = metax.net_use(ip, ports[0].port_number)
             if netSession != null then
-                coreKit.print("|- User accounts: " + netSession.get_num_users)
-                coreKit.print("|- User Active: " + netSession.is_any_active_user)
-                coreKit.print("|- Root Active: " + netSession.is_root_active_user)
-                coreKit.print("|- Port forwards: " + netSession.get_num_portforward)
+                coreKit.print("|- User Accounts: " + netSession.get_num_users)
+                coreKit.print("|- Active Users: " + netSession.is_any_active_user)
+                coreKit.print("|- Root User Active: " + netSession.is_root_active_user)
+                coreKit.print("|- Port Forwards: " + netSession.get_num_portforward)
             end if
         end if
    else
@@ -65,10 +65,10 @@ for ip in devices
 
     adminInfo = whois(ip)
     adminInfoLines = adminInfo.split(coreKit.NEW_LINE)
-    coreKit.print("|- Domain name: " + adminInfoLines[0].split(":")[1].trim)
+    coreKit.print("|- Domain Name: " + adminInfoLines[0].split(":")[1].trim)
     if adminInfoLines.len > 1 then
-        coreKit.print("|- Admin contact: " + adminInfoLines[1].split(":")[1].trim)
-        coreKit.print("|- Admin email: " + adminInfoLines[2].split(":")[1].trim)
+        coreKit.print("|- Admin Contact: " + adminInfoLines[1].split(":")[1].trim)
+        coreKit.print("|- Admin Email: " + adminInfoLines[2].split(":")[1].trim)
     end if
     coreKit.print("|- Open ports")
     openPortsFound = false

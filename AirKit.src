@@ -1,6 +1,6 @@
 // 
 // AirKit – A simple script to quickly obtain and connect to a vulnerable wifi network
-// Built by: _daniel1919 (https://github.com/daniel1919-00)
+// Author: _daniel1919 (https://github.com/daniel1919-00)
 // 
 // Automates Wi-Fi network attacks by orchestrating airmon, aireplay, and aircrack.
 // 
@@ -11,7 +11,7 @@ crypto = include_lib("/lib/crypto.so")
 CurrentShell = get_shell
 HostComputer = CurrentShell.host_computer
 
-coreKit.printHeader("AirKit", "_daniel1919", "Handles airmon, aireplay and aircrack, " + coreKit.NEW_LINE + " so you don't have to." + coreKit.NEW_LINE + coreKit.NEW_LINE + "Note: Use -a flag to toggle auto selection mode, " + coreKit.NEW_LINE + " this will sort all networks by strength " + coreKit.NEW_LINE + " and will attempt to hack each one,  " + coreKit.NEW_LINE + " only stopping at the first successful hack .")
+coreKit.printHeader("AirKit", "_daniel1919(https://github.com/daniel1919-00)", "Handles airmon, aireplay and aircrack, " + coreKit.NEW_LINE + " so you don't have to." + coreKit.NEW_LINE + coreKit.NEW_LINE + "Note: Use -a flag to toggle auto selection mode, " + coreKit.NEW_LINE + " this will sort all networks by strength " + coreKit.NEW_LINE + " and will attempt to hack each one,  " + coreKit.NEW_LINE + " only stopping at the first successful hack .")
 
 manualMode = true
 if coreKit.Cli.hasFlag("-a") then
