@@ -15,38 +15,38 @@ coreKit.NEW_LINE = char(10)
 // @param string author     	 Author.
 // @param string [description]   Optional program description.
 coreKit.printHeader = function(programName, author, description = "")
-	lines = []
-	lines.push("# " + programName)
-	lines.push("# Assembled by: " + author)
+    lines = []
+    lines.push("# " + programName)
+    lines.push("# Assembled by: " + author)
     lines.push("#")
-	
-	if description != "" then
-		// Assume that new lines could be added in the description
-		descLines = description.split(coreKit.NEW_LINE)
-		for descLine in descLines
-			lines.push("# " + descLine.trim)
-		end for
-	end if
+    
+    if description != "" then
+        // Assume that new lines could be added in the description
+        descLines = description.split(coreKit.NEW_LINE)
+        for descLine in descLines
+            lines.push("# " + descLine.trim)
+        end for
+    end if
 
-	// Determine the max line length
-	maxLen = 0
-	for line in lines
-		if line.len > maxLen then
-			maxLen = line.len
-		end if
-	end for
+    // Determine the max line length
+    maxLen = 0
+    for line in lines
+        if line.len > maxLen then
+            maxLen = line.len
+        end if
+    end for
 
     // Subtract 2 chars to account for the initial '# ' in each line
-	border = "=" * (maxLen - 2)
-	borderLine = "# " + border
+    border = "=" * (maxLen - 2)
+    borderLine = "# " + border
 
-	print ""
-	print ""
-	print ""
-	print borderLine
-	for line in lines
-		print line
-	end for
-	print borderLine
-	print ""
+    print("")
+    print("")
+    print("")
+    print(borderLine)
+    for line in lines
+        print(line)
+    end for
+    print(borderLine)
+    print("")
 end function

@@ -1,42 +1,21 @@
-// prepkit – a hybrid C-style preprocessor for GreyScript.
-// Built by: _daniel1919 (https://github.com/daniel1919-00)
-// 
-// Enables modular code organization via `#import` directives.
-// - Entry file uses native `import_code` to avoid text size limits.
-// - Nested imports are fully inlined, supporting deep includes and relative paths.
-// 
-// Supports:
-//   - Relative and nested imports
-//   - Plain `.src` files (binaries not supported)
-//   - Single-file output suitable for compilation or inspection
-// 
-// Usage:
-//   prepkit <source_file> [options]
-// 
-// Options:
-//   -o <path>   Output folder path (default: alongside source)
-//   -d          Dry run: process files without compiling the binary
-//   -i          Compiled binary can be imported in scripts
-//   -c          Preserve entrypoint script name case
-
-print ""
-print ""
-print ""
-print "##########################################################"
-print "# PrepKit - A hybrid C-style preprocessor for GreyScript."
-print "##########################################################"
-print ""
+print("")
+print("")
+print("")
+print("##########################################################")
+print("# PrepKit - A hybrid C-style preprocessor for GreyScript.")
+print("##########################################################")
+print("")
 
 if params.len == 0 then
-	print "Usage:"
-	print "  prepkit [source file path] [options]"
-	print ""
-	print "Options:"
-	print " -o <path> Specify output directory"
-	print " -d        Dry run: process files without compilation"
-	print " -i        Compiled binary can be imported in scripts"
-    print " -c        Preserve entrypoint script name case"
-	exit()
+    print("Usage:")
+    print("  prepkit [source file path] [options]")
+    print("")
+    print("Options:")
+    print(" -o <path> Specify output directory")
+    print(" -d        Dry run: process files without compilation")
+    print(" -i        Compiled binary can be imported in scripts")
+    print(" -c        Preserve entrypoint script name case")
+    exit()
 end if
 
 NEW_LINE = char(10)
@@ -77,35 +56,35 @@ end while
 // @return                     The resolved absolute path.
 // 
 resolvePath = function(relativePath, currentPath = null)
-	if relativePath[0] == "/" then
-		return relativePath  // already absolute
-	end if
+    if relativePath[0] == "/" then
+        return relativePath  // already absolute
+    end if
 
-	if currentPath == null then
-		currentPath = current_path
-	end if
+    if currentPath == null then
+        currentPath = current_path
+    end if
 
-	pathComponents = relativePath.split("/")
+    pathComponents = relativePath.split("/")
 
-	for component in pathComponents
-		if component == "." then
-			continue
-		else if component == ".." then
-			currentPath = parent_path(currentPath)
-		else
-			currentPath = currentPath + "/" + component
-		end if
-	end for
+    for component in pathComponents
+        if component == "." then
+            continue
+        else if component == ".." then
+            currentPath = parent_path(currentPath)
+        else
+            currentPath = currentPath + "/" + component
+        end if
+    end for
 
-	return currentPath
+    return currentPath
 end function
 
 formatTime = function(seconds)
-	if seconds >= 1 then
+    if seconds >= 1 then
         return round(seconds * 100) / 100 + "s"
-	else
+    else
         return round(seconds * 100000) / 100 + "ms"
-	end if
+    end if
 end function
 
 // Preps file for compilation.
@@ -116,22 +95,22 @@ end function
 // 
 prepFile = function(file, outputDest, nestingLevel = 0)
     nestLevelIndent = ""
-	if nestingLevel == 0 then
-        print "Processing entrypoint [" + file.name + "]"
+    if nestingLevel == 0 then
+        print("Processing entrypoint [" + file.name + "]")
     else
         nestLevelIndent = "  " * nestingLevel
-	end if
+    end if
 
     if not file.has_permission("r") then
-		exit(nestLevelIndent + "|- Can not read file [" + file.path + "]: Permission denied!")
-	end if
+        exit(nestLevelIndent + "|- Can not read file [" + file.path + "]: Permission denied!")
+    end if
 
-	fileContents = file.get_content
-	outputLines = []
-	lines = fileContents.split(NEW_LINE)
-	currentLine = 0;
+    fileContents = file.get_content
+    outputLines = []
+    lines = fileContents.split(NEW_LINE)
+    currentLine = 0;
 
-	for line in lines
+    for line in lines
         line = line.trim
         currentLine = currentLine + 1
         // Skip empty lines and comments
@@ -140,72 +119,72 @@ prepFile = function(file, outputDest, nestingLevel = 0)
         end if
 
         // Process #import directive
-		if line.indexOf("#import") != null then
-			startQuote = line.indexOf("""")
-			endQuote = line.lastIndexOf("""")
-			
-			if startQuote == null or endQuote == null or endQuote <= startQuote then
-				exit(nestLevelIndent + "|- Invalid #import syntax in [" + file.path + "]:" + currentLine)
-			end if
+        if line.indexOf("#import") != null then
+            startQuote = line.indexOf("""")
+            endQuote = line.lastIndexOf("""")
+            
+            if startQuote == null or endQuote == null or endQuote <= startQuote then
+                exit(nestLevelIndent + "|- Invalid #import syntax in [" + file.path + "]:" + currentLine)
+            end if
 
-			importPath = slice(line, startQuote + 1, endQuote).trim
-			 
-			if importPath.indexOf(".src") == null then
-				importPath = importPath + ".src"
-			end if
-			
-			importResolvedPath = resolvePath(importPath, file.parent.path)
-			importFile = HostComputer.File(importResolvedPath)
-			if not importFile then
-				exit(nestLevelIndent + "|- Failed to import [" + importResolvedPath + "] in [" + file.path + "]:" + currentLine)
-			end if
-		
-            print nestLevelIndent + "|- Linking [" + importFile.name + "]"
+            importPath = slice(line, startQuote + 1, endQuote).trim
+             
+            if importPath.indexOf(".src") == null then
+                importPath = importPath + ".src"
+            end if
+            
+            importResolvedPath = resolvePath(importPath, file.parent.path)
+            importFile = HostComputer.File(importResolvedPath)
+            if not importFile then
+                exit(nestLevelIndent + "|- Failed to import [" + importResolvedPath + "] in [" + file.path + "]:" + currentLine)
+            end if
+        
+            print(nestLevelIndent + "|- Linking [" + importFile.name + "]")
             
             // Preprocess the imported files first
             importedFile = prepFile(importFile, outputDest, nestingLevel + 1)
 
-			if nestingLevel == 0 then
-				outputLines.push("import_code" + "(""" + importedFile.path + """)") // The compiler sees "import_code" with a parenthesis next to it and freaks out :D
-			else
+            if nestingLevel == 0 then
+                outputLines.push("import_code" + "(""" + importedFile.path + """)") // The compiler sees "import_code" with a parenthesis next to it and freaks out :D
+            else
                 for importLine in importedFile
                     outputLines.push(importLine)
                 end for
-			end if
+            end if
 
             continue
-		end if
+        end if
 
         outputLines.push(line)
-	end for
-	
+    end for
+    
     // The _first_ nest level uses "import_code" function, so we need to make a copy of the original imported files (processed on the _second_ nest level) and move them in the same output destination as the main source file. 
     // Starting with the _second_ nest level, everything is inlined, and the file location becomes irrelevant (except for the _second_ level itself because it is referenced in the main source file)
-	if nestingLevel < 2 then
+    if nestingLevel < 2 then
         outputFileName = file.name
 
         if nestingLevel == 0 and not CLI_FLAGS.hasIndex("-c") then
             outputFileName = outputFileName.lower
         end if
 
-		outputPath = outputDest + "/" + outputFileName
-		outputFile = HostComputer.File(outputPath)
-		
-		if outputFile == null then
-			outputFileTouchResult = HostComputer.touch(outputDest, outputFileName)
-			if outputFileTouchResult != 1 then
-				exit(nestLevelIndent + "|- Failed to create output file [" + outputPath + "]: " + outputFileTouchResult)
-			else
-				outputFile = HostComputer.File(outputPath)
-				if outputFile == null then
-					exit(nestLevelIndent + "|- Failed to open output file [" + outputPath + "]")
-				end if
-			end if
-		end if 
-			
-		outputFile.set_content(outputLines.join(NEW_LINE))	
-		return outputFile
-	end if
+        outputPath = outputDest + "/" + outputFileName
+        outputFile = HostComputer.File(outputPath)
+        
+        if outputFile == null then
+            outputFileTouchResult = HostComputer.touch(outputDest, outputFileName)
+            if outputFileTouchResult != 1 then
+                exit(nestLevelIndent + "|- Failed to create output file [" + outputPath + "]: " + outputFileTouchResult)
+            else
+                outputFile = HostComputer.File(outputPath)
+                if outputFile == null then
+                    exit(nestLevelIndent + "|- Failed to open output file [" + outputPath + "]")
+                end if
+            end if
+        end if 
+            
+        outputFile.set_content(outputLines.join(NEW_LINE))	
+        return outputFile
+    end if
 
     return outputLines
 end function
@@ -213,31 +192,31 @@ end function
 sourceFilePath = resolvePath(params[0])
 sourceFile = HostComputer.File(sourceFilePath)
 if not sourceFile then
-	exit("Path Error: '" + sourceFilePath + "' is invalid!")
+    exit("Path Error: '" + sourceFilePath + "' is invalid!")
 end if
 
 if sourceFile.is_folder then
-	exit("Path Error: '" + sourceFilePath + "' is a directory, expected a file.")
+    exit("Path Error: '" + sourceFilePath + "' is a directory, expected a file.")
 end if 
 
 destinationPath = sourceFile.parent.path
 if CLI_FLAGS.hasIndex("-o") then
-	destinationResolvedPath = resolvePath(CLI_FLAGS["-o"])
-	destinationPath = HostComputer.File(destinationResolvedPath)
-	if not destinationPath then
-		exit("Path Error: destination path ['" + destinationResolvedPath + "'] is invalid!")
-	end if
+    destinationResolvedPath = resolvePath(CLI_FLAGS["-o"])
+    destinationPath = HostComputer.File(destinationResolvedPath)
+    if not destinationPath then
+        exit("Path Error: destination path ['" + destinationResolvedPath + "'] is invalid!")
+    end if
 
-	if not destinationPath.is_folder then
-		exit("Path Error: '" + destinationPath.path + "' is a file, expected a directory.")
-	end if 
+    if not destinationPath.is_folder then
+        exit("Path Error: '" + destinationPath.path + "' is a file, expected a directory.")
+    end if 
 
-	destinationPath = destinationPath.path
+    destinationPath = destinationPath.path
 end if
 
 dryRun = CLI_FLAGS.hasIndex("-d")
 if dryRun then
-	print "Running in [DRY] mode: Processing files without compiling the binary!"
+    print("Running in [DRY] mode: Processing files without compiling the binary!")
 end if
 
 outputDestDirName = "PREPKIT_OUT_" + sourceFile.name[0:-4]
@@ -251,15 +230,15 @@ processedFile = prepFile(sourceFile, outputDestPath)
 inlinedSourceCodeFileName = processedFile.name[0:-4]
 
 if not dryRun then
-	print("Compiling binary...")
-	buildErrors = CurrentShell.build(processedFile.path, destinationPath, CLI_FLAGS.hasIndex("-i"))
-	processedFile.parent.delete
-		
-	if buildErrors != "" then
-		exit("Build failed: " + buildErrors)
-	end if
+    print("Compiling binary...")
+    buildErrors = CurrentShell.build(processedFile.path, destinationPath, CLI_FLAGS.hasIndex("-i"))
+    processedFile.parent.delete
+        
+    if buildErrors != "" then
+        exit("Build failed: " + buildErrors)
+    end if
 
-	print "Binary compiled: " + destinationPath + "/" + inlinedSourceCodeFileName
+    print("Binary compiled: " + destinationPath + "/" + inlinedSourceCodeFileName)
 end if
 
-print "Processing finished in " + formatTime(time - scriptStartTime)
+print("Processing finished in " + formatTime(time - scriptStartTime))

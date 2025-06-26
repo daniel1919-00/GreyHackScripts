@@ -18,7 +18,7 @@ if params.len > 0 then
         exit("Invalid ip given ["+targetIp+"]!")
     end if
 
-    print "Fetching details for target IP ["+targetIp+"]"
+    print("Fetching details for target IP ["+targetIp+"]")
 
     if is_lan_ip(targetIp) then
         router = get_router
@@ -79,13 +79,13 @@ for ip in devices
             netSession = metax.net_use(ip, port.port_number)
             if netSession != null then
                 metaLib = netSession.dump_lib
-                print "  |- Lib: " + metaLib.lib_name + " v" + metaLib.version
+                print("  |- Lib: " + metaLib.lib_name + " v" + metaLib.version)
             end if
         end if
     end for
 
     if not openPortsFound then
-        print " |- N/A"
+        print(" |- N/A")
     end if
-    print " "
+    print(" ")
 end for

@@ -16,9 +16,9 @@ coreKit.printHeader("AirKit", "_daniel1919", "Handles airmon, aireplay and aircr
 manualMode = true
 if coreKit.Cli.hasFlag("-a") then
     manualMode = false
-    print "Operating mode: AUTO"
+    print("Operating mode: AUTO")
 else
-    print "Operating mode: MANUAL"
+    print("Operating mode: MANUAL")
 end if
 
 devices = HostComputer.network_devices
@@ -29,7 +29,7 @@ if deviceList.len == 0 then
 end if
 
 if deviceList.len > 1 then
-    print "Multiple network devices found ("+deviceList.len+")!"
+    print("Multiple network devices found ("+deviceList.len+")!")
     table = ["INTERFACE CHIPSET MONITORING_SUPPORT"]
     for device in deviceList
         table.push(device)
@@ -45,7 +45,7 @@ else
 end if
 
 networks = HostComputer.wifi_networks(networkInterface)
-print "Scanning for WIFI networks on ["+networkInterface+"]..."
+print("Scanning for WIFI networks on ["+networkInterface+"]...")
 
 if networks == null or not networks.len then
     exit("No networks where found on the given network interface ["+networkInterface+"]!")
@@ -104,7 +104,7 @@ end for
 wifiTargets.sort("power", 0)
 
 if manualMode then
-    print "Select target network from the table below."
+    print("Select target network from the table below.")
     table = ["INDEX ESSID BSSID POWER POTENTIAL ACKS"]
 
     wifiIndex = 0
@@ -114,8 +114,9 @@ if manualMode then
     end for    
 
     print(format_columns(table.join(coreKit.NEW_LINE)))
-    wifiIndex = user_input("Target network: ").to_int
-    if (typeof(wifiIndex) == "string" or wifiIndex < 0 or wifiIndex > wifiTargets.len - 1) then
+    wifiIndex = user_input("Target network index: ").to_int
+    if typeof(wifiIndex) != "number" or (wifiIndex < 0 or wifiIndex > wifiTargets.len - 1) then
+        print("Invalid index entered, using index 0.")
         wifiIndex = 0
     end if
 
@@ -123,13 +124,13 @@ if manualMode then
 end if
 
 for wifiTarget in wifiTargets
-    print "Attempting to crack the password for " + wifiTargetToFormattedText(wifiTarget)
+    print("Attempting to crack the password for " + wifiTargetToFormattedText(wifiTarget))
     wifiPassword = crackWifi(wifiTarget)
     if wifiPassword == null then
         if manualMode then
-            print "Failed to crack network!"
+            print("Failed to crack network!")
         else
-            print "Failed to crack network! Trying next network on list."
+            print("Failed to crack network! Trying next network on list.")
         end if
 
         continue
