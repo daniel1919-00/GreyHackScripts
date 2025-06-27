@@ -1,3 +1,8 @@
+// 
+// PrepKit – Simple C-style preprocessor for GreyScript.
+// Author: _daniel1919 (https://github.com/daniel1919-00)
+// 
+
 printInfo = function(message)
     print("<color=#80CFFF>" + message)
 end function
@@ -30,8 +35,11 @@ if params.len == 0 then
     printInfo("Options:")
     printInfo(" -o <path> Specify output directory")
     printInfo(" -d        Dry run: process files without compilation")
-    printInfo(" -i        Compiled binary can be imported in scripts")
+    printInfo(" -i        Compiled binary can be imported in other scripts")
     printInfo(" -c        Preserve entrypoint script name case")
+    printInfo(" -w        Watch source file and recompile on changes.")
+    printInfo("             Warning: Because the game does not have file timestamps,")
+    printInfo("             this checks the actual file contents for changes, which is slow!")
     exit()
 end if
 
@@ -110,7 +118,7 @@ end function
 // @param string outputDest  Destination folder path for output
 // @return File        The prepped output file
 // 
-prepFile = function(file, outputDest, nestingLevel = 0)
+processSourceFile = function(file, outputDest, nestingLevel = 0)
     nestLevelIndent = ""
     if nestingLevel == 0 then
         printInfo("Processing entrypoint [" + file.name + "]")
@@ -162,7 +170,7 @@ prepFile = function(file, outputDest, nestingLevel = 0)
             printInfo(nestLevelIndent + "|- Linking [" + importFile.name + "]")
             
             // Preprocess the imported files first
-            importedFile = prepFile(importFile, outputDest, nestingLevel + 1)
+            importedFile = processSourceFile(importFile, outputDest, nestingLevel + 1)
 
             if nestingLevel == 0 then
                 outputLines.push("import_code" + "(""" + importedFile.path + """)") // The compiler sees "import_code" with a parenthesis next to it and freaks out :D
@@ -211,6 +219,27 @@ prepFile = function(file, outputDest, nestingLevel = 0)
     return outputLines
 end function
 
+processAndCompile = function(sourceFile, outputDestPath)
+    processedSrcFile = processSourceFile(sourceFile, outputDestPath)
+    inlinedSourceCodeFileName = processedSrcFile.name[0:-4]
+
+    if not dryRun then
+        printInfo("Compiling binary...")
+        buildErrors = CurrentShell.build(processedSrcFile.path, destinationPath, CLI_FLAGS.hasIndex("-i"))
+        processedSrcFile.parent.delete
+
+        if buildErrors != "" then
+            printError("Build failed: " + buildErrors)
+            exit()
+        end if
+
+        printOk("Binary compiled: " + destinationPath + "/" + inlinedSourceCodeFileName)
+    end if
+
+    printOk("Processing finished in: " + formatTime(time - scriptStartTime))
+end function
+
+
 sourceFilePath = resolvePath(params[0])
 sourceFile = HostComputer.File(sourceFilePath)
 if not sourceFile then
@@ -252,20 +281,32 @@ if not HostComputer.File(outputDestPath) then
     HostComputer.create_folder(sourceFile.parent.path, outputDestDirName)
 end if
 
-processedFile = prepFile(sourceFile, outputDestPath)
-inlinedSourceCodeFileName = processedFile.name[0:-4]
+if CLI_FLAGS.hasIndex("-w") then
+    lastSourceFileHash = hash(sourceFile.get_content)
+    processAndCompile(sourceFile, outputDestPath)
+    print("")
+    printInfo("Watching source file for changes...")
 
-if not dryRun then
-    printInfo("Compiling binary...")
-    buildErrors = CurrentShell.build(processedFile.path, destinationPath, CLI_FLAGS.hasIndex("-i"))
-    processedFile.parent.delete
-        
-    if buildErrors != "" then
-        printError("Build failed: " + buildErrors)
-        exit()
-    end if
+    while true
+        wait(0.5)  // Uses seconds
+        sourceFile = HostComputer.File(sourceFilePath)
+        if not sourceFile then
+            printError("Path Error: '" + sourceFilePath + "' is invalid!")
+            exit()
+        end if
 
-    printOk("Binary compiled: " + destinationPath + "/" + inlinedSourceCodeFileName)
+        currentSourceFileHash = hash(sourceFile.get_content)
+        if lastSourceFileHash != currentSourceFileHash then
+            print("")
+            printInfo("Source file changed, reprocessing...")
+
+            lastSourceFileHash = currentSourceFileHash
+            scriptStartTime = time
+            processAndCompile(sourceFile, outputDestPath)
+            print("")
+            printInfo("Watching source file for changes...")
+        end if
+    end while
+else
+    processAndCompile(sourceFile, outputDestPath)
 end if
-
-printOk("Processing finished in " + formatTime(time - scriptStartTime))
