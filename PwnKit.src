@@ -27,7 +27,6 @@ if is_valid_ip(targetIP) == 0 then
 end if
 
 targetPort = null
-
 if params.hasIndex(1) then
     targetPort = params[1]
 end if
