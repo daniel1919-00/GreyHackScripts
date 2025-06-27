@@ -71,3 +71,21 @@ GrayKit.Network.sortIps = function(ipAddresses)
 
     return sortedIpAddresses
 end function
+
+GrayKit.Network.whois = function(ip)
+    adminInfo = whois(ip)
+    adminInfoLines = adminInfo.split(GrayKit.NEW_LINE)
+
+    data = {"domain": adminInfoLines[0].split(":")[1].trim,
+            "admin": "",
+            "email": "",
+            "phone": ""}
+
+    if adminInfoLines.len > 1 then
+        data.admin = adminInfoLines[1].split(":")[1].trim
+        data.email = adminInfoLines[2].split(":")[1].trim
+        data.phone = adminInfoLines[3].split(":")[1].trim
+    end if            
+
+    return data
+end function

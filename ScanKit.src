@@ -42,12 +42,17 @@ end if
 
 printDeviceInfo = function(ip)
     if ip == router.public_ip or ip == router.local_ip then
+        firewallRules = router.firewall_rules
+        if firewallRules.len == 0 then
+            firewallRules = ["N/A"]
+        end if
+
         print("")
         GrayKit.print("[Router]")
         GrayKit.print("|- Local IP: " + router.local_ip)
         GrayKit.print("|- Public IP: " + router.public_ip)
         GrayKit.print("|- Kernel version: " + router.kernel_version)
-        GrayKit.print("|- Firewall Rules: " + router.firewall_rules.join(", "))
+        GrayKit.print("|- Firewall Rules: " + firewallRules.join(", "))
         printHeader = false
         ports = router.used_ports
     else
@@ -55,7 +60,16 @@ printDeviceInfo = function(ip)
         GrayKit.print("[" + ip + "]")
     end if
 
-   if ports != null and ports.len > 0 then
+    adminInfo = GrayKit.Network.whois(ip)
+    GrayKit.print("|- Domain Name: " + adminInfo.domain)
+
+    if adminInfo.admin != "" then
+        GrayKit.print("  |- Admin: " + adminInfo.admin)
+        GrayKit.print("  |- Email: " + adminInfo.email)
+        GrayKit.print("  |- Phone: " + adminInfo.phone)
+    end if
+
+    if ports != null and ports.len > 0 then
         if metax != null then
             netSession = metax.net_use(ip, ports[0].port_number)
             if netSession != null then
@@ -65,18 +79,8 @@ printDeviceInfo = function(ip)
                 GrayKit.print("|- Port Forwards: " + netSession.get_num_portforward)
             end if
         end if
-   else
-       ports = []
-   end if
-
-    adminInfo = whois(ip)
-    adminInfoLines = adminInfo.split(GrayKit.NEW_LINE)
-    GrayKit.print("|- Domain Name: " + adminInfoLines[0].split(":")[1].trim)
-
-    if adminInfoLines.len > 1 then
-        GrayKit.print("  |- Admin: " + adminInfoLines[1].split(":")[1].trim)
-        GrayKit.print("  |- Email: " + adminInfoLines[2].split(":")[1].trim)
-        GrayKit.print("  |- Phone: " + adminInfoLines[3].split(":")[1].trim)
+    else
+        ports = []
     end if
 
     GrayKit.print("|- Open ports")
