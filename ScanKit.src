@@ -1,11 +1,11 @@
 //
-// AirScan – A simple script to quickly scan the network for devices with open ports
+// ScanKit – A simple script to quickly scan the network for devices with open ports
 // Author: _daniel1919 (https://github.com/daniel1919-00)
 //
 
 #import "CoreKit/CoreKit.src"
 
-coreKit.printHeader("AirScan", "_daniel1919(https://github.com/daniel1919-00)", "A simple script to quickly scan the network " + coreKit.NEW_LINE + " for devices with open ports." + coreKit.NEW_LINE + coreKit.NEW_LINE + "Note: Pass an ip to target specific machines.")
+coreKit.printHeader("ScanKit", "_daniel1919(https://github.com/daniel1919-00)", "A simple script to quickly scan the network " + coreKit.NEW_LINE + " for devices with open ports." + coreKit.NEW_LINE + coreKit.NEW_LINE + "Note: Pass an ip to target specific machines.")
 
 metax = include_lib("/lib/metaxploit.so")
 if metax == null then

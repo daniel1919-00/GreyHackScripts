@@ -9,9 +9,9 @@ A collection of scripts made for [Grey Hack](https://store.steampowered.com/app/
 - `AirKit` - Quickly finds and connects to a vulnerable WiFi network.
 
     ![SCREENSHOT](/screenshots/airkit.png?raw=true "AirKit")
-- `AirScan` - Scans the network (or target IP address) and provides extensive information (open ports and used libraries for each, number of available accounts, etc.).
+- `ScanKit` - Scans the network (or target IP address) and provides extensive information (open ports and used libraries for each, number of available accounts, etc.).
 
-    ![SCREENSHOT](/screenshots/airscan.png?raw=true "AirScan")
+    ![SCREENSHOT](/screenshots/scankit.png?raw=true "ScanKit")
 
 ## Installation
 All scripts are intended to be compiled with `PrepKit`.

@@ -7,13 +7,13 @@
 // -                                  -
 // ------------------------------------
 
-coreKit.math = {}
+coreKit.Math = {}
 
 // Gets the maximum between numbers a and b
 // @param number a
 // @param number b
 // @return number
-coreKit.math.max = function(a, b)
+coreKit.Math.max = function(a, b)
 	if a > b then
 		return a
 	else 
@@ -25,7 +25,7 @@ end function
 // @param number a
 // @param number b
 // @return number
-coreKit.math.min = function(a, b)
+coreKit.Math.min = function(a, b)
 	if a < b then
 		return a
 	else 
@@ -37,6 +37,6 @@ end function
 // @param number val Value to clamp
 // @param number minVal
 // @param number maxVal
-coreKit.math.clamp = function(val, minVal, maxVal)
-	return coreKit.math.max(minVal, coreKit.math.min(val, maxVal))
+coreKit.Math.clamp = function(val, minVal, maxVal)
+	return coreKit.Math.max(minVal, coreKit.Math.min(val, maxVal))
 end function
