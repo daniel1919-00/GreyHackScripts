@@ -110,7 +110,7 @@ wifiTargets.sort("power", 0)
 
 if manualMode then
     GrayKit.print("Select target network from the table below.")
-    table = ["INDEX ESSID BSSID POWER POTENTIAL ACKS"]
+    table = ["INDEX ESSID BSSID POWER ACKS"]
 
     wifiIndex = 0
     for wifiTarget in wifiTargets
