@@ -220,13 +220,16 @@ processSourceFile = function(file, outputDest, nestingLevel = 0)
 end function
 
 processAndCompile = function(sourceFile, outputDestPath)
+    if not HostComputer.File(outputDestPath) then
+        HostComputer.create_folder(sourceFile.parent.path, outputDestDirName)
+    end if
+
     processedSrcFile = processSourceFile(sourceFile, outputDestPath)
     inlinedSourceCodeFileName = processedSrcFile.name[0:-4]
 
     if not dryRun then
         printInfo("Compiling binary...")
         buildErrors = CurrentShell.build(processedSrcFile.path, destinationPath, CLI_FLAGS.hasIndex("-i"))
-        processedSrcFile.parent.delete
 
         if buildErrors != "" then
             printError("Build failed: " + buildErrors)
@@ -237,6 +240,8 @@ processAndCompile = function(sourceFile, outputDestPath)
     end if
 
     printOk("Processing finished in: " + formatTime(time - scriptStartTime))
+
+    processedSrcFile.parent.delete
 end function
 
 
@@ -277,18 +282,16 @@ end if
 outputDestDirName = "PREPKIT_OUT_" + sourceFile.name[0:-4]
 outputDestPath = sourceFile.parent.path + "/" + outputDestDirName
 
-if not HostComputer.File(outputDestPath) then
-    HostComputer.create_folder(sourceFile.parent.path, outputDestDirName)
-end if
+processAndCompile(sourceFile, outputDestPath)
 
 if CLI_FLAGS.hasIndex("-w") then
     lastSourceFileHash = hash(sourceFile.get_content)
-    processAndCompile(sourceFile, outputDestPath)
     print("")
     printInfo("Watching source file for changes...")
 
     while true
         wait(0.5)  // Uses seconds
+
         sourceFile = HostComputer.File(sourceFilePath)
         if not sourceFile then
             printError("Path Error: '" + sourceFilePath + "' is invalid!")
@@ -298,7 +301,7 @@ if CLI_FLAGS.hasIndex("-w") then
         currentSourceFileHash = hash(sourceFile.get_content)
         if lastSourceFileHash != currentSourceFileHash then
             print("")
-            printInfo("Source file changed, reprocessing...")
+            printInfo("Source file changed, recompiling...")
 
             lastSourceFileHash = currentSourceFileHash
             scriptStartTime = time
@@ -307,6 +310,4 @@ if CLI_FLAGS.hasIndex("-w") then
             printInfo("Watching source file for changes...")
         end if
     end while
-else
-    processAndCompile(sourceFile, outputDestPath)
 end if
