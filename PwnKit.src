@@ -3,12 +3,12 @@
 // Author: _daniel1919 (https://github.com/daniel1919-00)
 //
 
-#import "CoreKit/CoreKit.src"
+#import "GrayKit/GrayKit.src"
 
-coreKit.printHeader("PwnKit", "_daniel1919(https://github.com/daniel1919-00)")
+GrayKit.printHeader("PwnKit", "_daniel1919(https://github.com/daniel1919-00)")
 
 metax = include_lib("/lib/metaxploit.so")
 if metax == null then
-    coreKit.printError("Metaxploit library(metaxploit.so) missing!")
+    GrayKit.printError("Metaxploit library(metaxploit.so) missing!")
     exit()
 end if

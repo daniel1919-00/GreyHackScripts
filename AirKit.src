@@ -5,37 +5,37 @@
 // Automates Wi-Fi network attacks by orchestrating airmon, aireplay, and aircrack.
 // 
 
-#import "CoreKit/CoreKit.src"
+#import "GrayKit/GrayKit.src"
 
 crypto = include_lib("/lib/crypto.so")
 CurrentShell = get_shell
 HostComputer = CurrentShell.host_computer
 
-coreKit.printHeader("AirKit", "_daniel1919(https://github.com/daniel1919-00)", "Handles airmon, aireplay and aircrack, " + coreKit.NEW_LINE + " so you don't have to." + coreKit.NEW_LINE + coreKit.NEW_LINE + "Note: Use -a flag to toggle auto selection mode, " + coreKit.NEW_LINE + " this will sort all networks by strength " + coreKit.NEW_LINE + " and will attempt to hack each one,  " + coreKit.NEW_LINE + " only stopping at the first successful hack .")
+GrayKit.printHeader("AirKit", "_daniel1919(https://github.com/daniel1919-00)", "Handles airmon, aireplay and aircrack, " + GrayKit.NEW_LINE + " so you don't have to." + GrayKit.NEW_LINE + GrayKit.NEW_LINE + "Note: Use -a flag to toggle auto selection mode, " + GrayKit.NEW_LINE + " this will sort all networks by strength " + GrayKit.NEW_LINE + " and will attempt to hack each one,  " + GrayKit.NEW_LINE + " only stopping at the first successful hack .")
 
 manualMode = true
-if coreKit.Cli.hasFlag("-a") then
+if GrayKit.Cli.hasFlag("-a") then
     manualMode = false
-    coreKit.print("Operating mode: AUTO")
+    GrayKit.print("Operating mode: AUTO")
 else
-    coreKit.print("Operating mode: MANUAL")
+    GrayKit.print("Operating mode: MANUAL")
 end if
 
 devices = HostComputer.network_devices
-deviceList = devices.trim.split(coreKit.NEW_LINE)
+deviceList = devices.trim.split(GrayKit.NEW_LINE)
 
 if deviceList.len == 0 then
-    coreKit.printError("No network devices found on this system!")
+    GrayKit.printError("No network devices found on this system!")
     exit()
 end if
 
 if deviceList.len > 1 then
-    coreKit.printWarning("Multiple network devices found ("+deviceList.len+")!")
+    GrayKit.printWarning("Multiple network devices found ("+deviceList.len+")!")
     table = ["INTERFACE CHIPSET MONITORING_SUPPORT"]
     for device in deviceList
         table.push(device)
     end for
-    coreKit.print(format_columns(table.join(coreKit.NEW_LINE)))
+    GrayKit.print(format_columns(table.join(GrayKit.NEW_LINE)))
 
     networkInterface = user_input("Net interface(empty for wlan0): ", false)
     if networkInterface == "" then
@@ -46,10 +46,10 @@ else
 end if
 
 networks = HostComputer.wifi_networks(networkInterface)
-coreKit.print("Scanning for WIFI networks on ["+networkInterface+"]...")
+GrayKit.print("Scanning for WIFI networks on ["+networkInterface+"]...")
 
 if networks == null or not networks.len then
-    coreKit.printError("No networks where found on the given network interface ["+networkInterface+"]!")
+    GrayKit.printError("No networks where found on the given network interface ["+networkInterface+"]!")
     exit()
 end if
 
@@ -65,7 +65,7 @@ end function
 crackWifi = function(targetNetwork)
     airmonResult = crypto.airmon("start", networkInterface)
     if typeof(airmonResult) == "string" then
-        coreKit.printError("There was an error while switching monitoring mode: " + airmonResult)
+        GrayKit.printError("There was an error while switching monitoring mode: " + airmonResult)
         exit()
     end if
 
@@ -73,14 +73,14 @@ crackWifi = function(targetNetwork)
     crypto.airmon("stop", networkInterface)
 
     if aireplayResult != null then
-        coreKit.printError("aireplay error: " + aireplayResult)
+        GrayKit.printError("aireplay error: " + aireplayResult)
         exit()
     end if
 
     aireplayOutputFile = HostComputer.File("file.cap")
 
     if aireplayOutputFile == null then
-        coreKit.printError("Failed to find aireplay output file.cap!")
+        GrayKit.printError("Failed to find aireplay output file.cap!")
         exit()
     end if
 
@@ -109,7 +109,7 @@ end for
 wifiTargets.sort("power", 0)
 
 if manualMode then
-    coreKit.print("Select target network from the table below.")
+    GrayKit.print("Select target network from the table below.")
     table = ["INDEX ESSID BSSID POWER POTENTIAL ACKS"]
 
     wifiIndex = 0
@@ -118,10 +118,10 @@ if manualMode then
         wifiIndex = wifiIndex + 1
     end for    
 
-    coreKit.print(format_columns(table.join(coreKit.NEW_LINE)))
+    GrayKit.print(format_columns(table.join(GrayKit.NEW_LINE)))
     wifiIndex = user_input("Target network index: ").to_int
     if typeof(wifiIndex) != "number" or (wifiIndex < 0 or wifiIndex > wifiTargets.len - 1) then
-        coreKit.printWarning("Invalid index entered, using index 0.")
+        GrayKit.printWarning("Invalid index entered, using index 0.")
         wifiIndex = 0
     end if
 
@@ -129,13 +129,13 @@ if manualMode then
 end if
 
 for wifiTarget in wifiTargets
-    coreKit.print("Attempting to crack the password for " + wifiTargetToFormattedText(wifiTarget))
+    GrayKit.print("Attempting to crack the password for " + wifiTargetToFormattedText(wifiTarget))
     wifiPassword = crackWifi(wifiTarget)
     if wifiPassword == null then
         if manualMode then
-            coreKit.printError("Failed to crack network!")
+            GrayKit.printError("Failed to crack network!")
         else
-            coreKit.printWarning("Failed to crack network! Trying next network on list.")
+            GrayKit.printWarning("Failed to crack network! Trying next network on list.")
         end if
 
         continue
@@ -147,9 +147,9 @@ for wifiTarget in wifiTargets
         connectionResult = HostComputer.connect_wifi(networkInterface, wifiTarget.bssid, wifiTarget.essid, wifiPassword)
 
         if typeof(connectionResult) == "string" then
-            coreKit.printError("There was an error while connecting to new Wifi: " + connectionResult)
+            GrayKit.printError("There was an error while connecting to new Wifi: " + connectionResult)
         else
-            coreKit.printOk("Connected to new Wifi ["+ wifiTarget.essid +"] successfully.")
+            GrayKit.printOk("Connected to new Wifi ["+ wifiTarget.essid +"] successfully.")
         end if
     end if
 

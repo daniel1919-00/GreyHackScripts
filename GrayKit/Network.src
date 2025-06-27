@@ -1,4 +1,4 @@
-// coreKit – a lightweight utility library for GreyScript.
+// GrayKit – a lightweight utility library for GreyScript.
 // Author: _daniel1919 (https://github.com/daniel1919-00)
 // 
 // ------------------------------------
@@ -7,8 +7,8 @@
 // -                                  -
 // ------------------------------------
 
-coreKit.Network = {}
-coreKit.Network.portDescriptions = {
+GrayKit.Network = {}
+GrayKit.Network.portDescriptions = {
     20: "FTP",
     21: "FTP",
     22: "SSH",
@@ -48,10 +48,10 @@ coreKit.Network.portDescriptions = {
     8080: "HTTP Alt",
     8443: "HTTPS Alt"}
 
-coreKit.Network.getPortDesc = function(port)
+GrayKit.Network.getPortDesc = function(port)
     if self.portDescriptions.hasIndex(port) then
         return self.portDescriptions[port]
     else
-        return "Unknown or Unassigned Port"
+        return "Unknown"
     end if
 end function

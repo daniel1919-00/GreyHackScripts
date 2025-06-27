@@ -1,4 +1,4 @@
-// coreKit – a lightweight utility library for GreyScript.
+// GrayKit – a lightweight utility library for GreyScript.
 // Author: _daniel1919 (https://github.com/daniel1919-00)
 // 
 // ------------------------------------
@@ -7,21 +7,21 @@
 // -                                  -
 // ------------------------------------
 
-coreKit.NEW_LINE = char(10)
+GrayKit.NEW_LINE = char(10)
 
-coreKit.printOk = function(message)
+GrayKit.printOk = function(message)
     print("<color=#7CFC98>" + message)
 end function
 
-coreKit.printError = function(message)
+GrayKit.printError = function(message)
     print("<color=#FF7C7C>" + message)
 end function
 
-coreKit.printWarning = function(message)
+GrayKit.printWarning = function(message)
     print("<color=#FFE066>" + message)
 end function
 
-coreKit.print = function(message)
+GrayKit.print = function(message)
     print("<color=#80CFFF>" + message)
 end function
 
@@ -30,14 +30,14 @@ end function
 // @param string programName     Name of the program.
 // @param string author     	 Author.
 // @param string [description]   Optional program description.
-coreKit.printHeader = function(programName, author, description = "")
+GrayKit.printHeader = function(programName, author, description = "")
     lines = []
     lines.push("# " + programName)
     lines.push("# Coded by: " + author)
     lines.push("#")
     
     if description != "" then
-        descLines = description.split(coreKit.NEW_LINE)
+        descLines = description.split(GrayKit.NEW_LINE)
         for descLine in descLines
             lines.push("# " + descLine.trim)
         end for
@@ -55,12 +55,12 @@ coreKit.printHeader = function(programName, author, description = "")
     border = "=" * (maxLen - 2)
     borderLine = "# " + border
 
-    coreKit.print("")
-    coreKit.print("")
-    coreKit.print(borderLine)
+    GrayKit.print("")
+    GrayKit.print("")
+    GrayKit.print(borderLine)
     for line in lines
-        coreKit.print(line)
+        GrayKit.print(line)
     end for
-    coreKit.print(borderLine)
-    coreKit.print("")
+    GrayKit.print(borderLine)
+    GrayKit.print("")
 end function

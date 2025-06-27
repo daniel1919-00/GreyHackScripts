@@ -1,4 +1,4 @@
-// coreKit – a lightweight utility library for GreyScript.
+// GrayKit – a lightweight utility library for GreyScript.
 // Author: _daniel1919 (https://github.com/daniel1919-00)
 // 
 // ------------------------------------
@@ -7,8 +7,8 @@
 // -                                  -
 // ------------------------------------
 
-coreKit.Cli = {}
-coreKit.Cli._flagsParsed = false
+GrayKit.Cli = {}
+GrayKit.Cli._flagsParsed = false
 
 // 
 // Parses command-line arguments into a map of flags and their values.
@@ -18,12 +18,12 @@ coreKit.Cli._flagsParsed = false
 //   - Standalone boolean flags, e.g. -t (sets flag to true)
 //   - Combined single-character flags, e.g. -ab is equivalent to -a and -b both true
 //
-coreKit.Cli.getFlags = function()
-	if coreKit.Cli._flagsParsed then
+GrayKit.Cli.getFlags = function()
+	if GrayKit.Cli._flagsParsed then
 		return self.flags
 	end if
 
-	coreKit.Cli._flagsParsed = true
+	GrayKit.Cli._flagsParsed = true
 	self.flags = {}
 	i = 0
     while i < params.len
@@ -55,7 +55,7 @@ end function
 // 
 // @param string flag   The flag name to check (e.g. "o" or "-o").
 // @return boolean      True if the flag is present, otherwise false.
-coreKit.Cli.hasFlag = function(flag)
+GrayKit.Cli.hasFlag = function(flag)
 	if flag[0] != "-" then
 		flag = "-" + flag	
 	end if
@@ -67,7 +67,7 @@ end function
 // 
 // @param string flag  The flag name to look up (e.g. "o" or "-o").
 // @return boolean     The value of the flag, or null if the flag is not present.
-coreKit.Cli.getFlag = function(flag)
+GrayKit.Cli.getFlag = function(flag)
 	if flag[0] != "-" then
 		flag = "-" + flag	
 	end if

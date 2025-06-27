@@ -3,25 +3,25 @@
 // Author: _daniel1919 (https://github.com/daniel1919-00)
 //
 
-#import "CoreKit/CoreKit.src"
+#import "GrayKit/GrayKit.src"
 
-coreKit.printHeader("ScanKit", "_daniel1919(https://github.com/daniel1919-00)", "A simple script to quickly scan the network " + coreKit.NEW_LINE + " for devices with open ports." + coreKit.NEW_LINE + coreKit.NEW_LINE + "Note: Pass an ip to target specific machines.")
+GrayKit.printHeader("ScanKit", "_daniel1919(https://github.com/daniel1919-00)", "A simple script to quickly scan the network " + GrayKit.NEW_LINE + " for devices with open ports." + GrayKit.NEW_LINE + GrayKit.NEW_LINE + "Note: Pass an ip to target specific machines.")
 
 metax = include_lib("/lib/metaxploit.so")
 if metax == null then
-    coreKit.printWarning("Metaxploit library(metaxploit.so) missing, some information will not be available!")
+    GrayKit.printWarning("Metaxploit library(metaxploit.so) missing, some information will not be available!")
 else
-    coreKit.printOk("Metaxploit library loaded, additional information will be available.")
+    GrayKit.printOk("Metaxploit library loaded, additional information will be available.")
 end if
 
 if params.len > 0 then
     targetIp = params[0]
     if is_valid_ip(targetIp) == 0 then
-        coreKit.printError("Invalid ip given ["+targetIp+"]!")
+        GrayKit.printError("Invalid ip given ["+targetIp+"]!")
         exit
     end if
 
-    coreKit.print("Fetching details for target IP ["+targetIp+"]")
+    GrayKit.print("Fetching details for target IP ["+targetIp+"]")
 
     if is_lan_ip(targetIp) then
         router = get_router
@@ -30,7 +30,7 @@ if params.len > 0 then
     end if
 
     if router == null then
-        coreKit.printError("IP address not found [" + targetIp + "]")
+        GrayKit.printError("IP address not found [" + targetIp + "]")
         exit
     end if
 
@@ -47,16 +47,16 @@ for ip in devices
         ports = router.device_ports(ip)
     end if
 
-    coreKit.print("[" + ip + "]")
+    GrayKit.print("[" + ip + "]")
 
    if ports != null and ports.len > 0 then
         if metax != null then
             netSession = metax.net_use(ip, ports[0].port_number)
             if netSession != null then
-                coreKit.print("|- User Accounts: " + netSession.get_num_users)
-                coreKit.print("|- Active Users: " + netSession.is_any_active_user)
-                coreKit.print("|- Root User Active: " + netSession.is_root_active_user)
-                coreKit.print("|- Port Forwards: " + netSession.get_num_portforward)
+                GrayKit.print("|- User Accounts: " + netSession.get_num_users)
+                GrayKit.print("|- Active Users: " + netSession.is_any_active_user)
+                GrayKit.print("|- Root User Active: " + netSession.is_root_active_user)
+                GrayKit.print("|- Port Forwards: " + netSession.get_num_portforward)
             end if
         end if
    else
@@ -64,32 +64,32 @@ for ip in devices
    end if
 
     adminInfo = whois(ip)
-    adminInfoLines = adminInfo.split(coreKit.NEW_LINE)
-    coreKit.print("|- Domain Name: " + adminInfoLines[0].split(":")[1].trim)
+    adminInfoLines = adminInfo.split(GrayKit.NEW_LINE)
+    GrayKit.print("|- Domain Name: " + adminInfoLines[0].split(":")[1].trim)
     if adminInfoLines.len > 1 then
-        coreKit.print("|- Admin Contact: " + adminInfoLines[1].split(":")[1].trim)
-        coreKit.print("|- Admin Email: " + adminInfoLines[2].split(":")[1].trim)
+        GrayKit.print("|- Admin Contact: " + adminInfoLines[1].split(":")[1].trim)
+        GrayKit.print("|- Admin Email: " + adminInfoLines[2].split(":")[1].trim)
     end if
-    coreKit.print("|- Open ports")
+    GrayKit.print("|- Open ports")
     openPortsFound = false
     for port in ports
         if port.is_closed then continue
 
         openPortsFound = true
 
-        coreKit.print(" |- " +  port.port_number + " -> " + coreKit.Network.getPortDesc(port.port_number))
+        GrayKit.print(" |- " +  port.port_number + " -> " + GrayKit.Network.getPortDesc(port.port_number))
 
         if metax != null then
             netSession = metax.net_use(ip, port.port_number)
             if netSession != null then
                 metaLib = netSession.dump_lib
-                coreKit.print("  |- Lib: " + metaLib.lib_name + " v" + metaLib.version)
+                GrayKit.print("  |- Lib: " + metaLib.lib_name + " v" + metaLib.version)
             end if
         end if
     end for
 
     if not openPortsFound then
-        coreKit.print(" |- N/A")
+        GrayKit.print(" |- N/A")
     end if
     print(" ")
 end for

@@ -2,7 +2,7 @@
 A collection of scripts made for [Grey Hack](https://store.steampowered.com/app/605230/Grey_Hack/).
 
 ## Scripts
-- `CoreKit` - Core utilities and helpers. Used by most scripts (except PrepKit itself).
+- `GrayKit` - Core utilities and helpers. Used by most scripts (except PrepKit itself).
 - `PrepKit` - Hybrid C-style preprocessor for GreyScript. Required to compile the other scripts.
 
     ![SCREENSHOT](/screenshots/prepkit.png?raw=true "PrepKit")
