@@ -17,6 +17,7 @@ A collection of scripts made for [Grey Hack](https://store.steampowered.com/app/
 All scripts are intended to be compiled with `PrepKit`.
 
 1. Compile `PrepKit.src` (e.g., into /bin) using the in-game code editor.
+    1.1. Ensure the `GrayKit` libraries folder is located in the same directory as `PrepKit.src`.
 2. Then use it to compile other scripts. Example:
     ```shell
     prepkit AirKit.src -o /bin
