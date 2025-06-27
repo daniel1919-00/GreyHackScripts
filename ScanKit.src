@@ -17,11 +17,11 @@ end if
 if params.len > 0 then
     targetIp = params[0]
     if is_valid_ip(targetIp) == 0 then
-        GrayKit.printError("Invalid ip given ["+targetIp+"]!")
+        GrayKit.printError("Invalid IP address given [" + targetIp + "]!")
         exit
     end if
 
-    GrayKit.print("Fetching details for target IP ["+targetIp+"]")
+    GrayKit.print("Fetching details for target IP address [" + targetIp + "]")
 
     if is_lan_ip(targetIp) then
         router = get_router
@@ -34,20 +34,26 @@ if params.len > 0 then
         exit
     end if
 
-    devices = [targetIp]
+    targetIpAddresses = [targetIp]
 else 
     router = get_router
-    devices = router.devices_lan_ip
+    targetIpAddresses = GrayKit.Network.sortIps(router.devices_lan_ip)
 end if
 
-for ip in devices
-    if not is_lan_ip(ip) then
+printDeviceInfo = function(ip)
+    if ip == router.public_ip or ip == router.local_ip then
+        print("")
+        GrayKit.print("[Router]")
+        GrayKit.print("|- Local IP: " + router.local_ip)
+        GrayKit.print("|- Public IP: " + router.public_ip)
+        GrayKit.print("|- Kernel version: " + router.kernel_version)
+        GrayKit.print("|- Firewall Rules: " + router.firewall_rules.join(", "))
+        printHeader = false
         ports = router.used_ports
     else
         ports = router.device_ports(ip)
+        GrayKit.print("[" + ip + "]")
     end if
-
-    GrayKit.print("[" + ip + "]")
 
    if ports != null and ports.len > 0 then
         if metax != null then
@@ -66,30 +72,31 @@ for ip in devices
     adminInfo = whois(ip)
     adminInfoLines = adminInfo.split(GrayKit.NEW_LINE)
     GrayKit.print("|- Domain Name: " + adminInfoLines[0].split(":")[1].trim)
+
     if adminInfoLines.len > 1 then
-        GrayKit.print("|- Admin Contact: " + adminInfoLines[1].split(":")[1].trim)
-        GrayKit.print("|- Admin Email: " + adminInfoLines[2].split(":")[1].trim)
+        GrayKit.print("  |- Admin: " + adminInfoLines[1].split(":")[1].trim)
+        GrayKit.print("  |- Email: " + adminInfoLines[2].split(":")[1].trim)
+        GrayKit.print("  |- Phone: " + adminInfoLines[3].split(":")[1].trim)
     end if
+
     GrayKit.print("|- Open ports")
+
     openPortsFound = false
     for port in ports
-        if port.is_closed then continue
+        if port.is_closed then 
+            continue
+        end if
 
         openPortsFound = true
-
-        GrayKit.print(" |- " +  port.port_number + " -> " + GrayKit.Network.getPortDesc(port.port_number))
-
-        if metax != null then
-            netSession = metax.net_use(ip, port.port_number)
-            if netSession != null then
-                metaLib = netSession.dump_lib
-                GrayKit.print("  |- Lib: " + metaLib.lib_name + " v" + metaLib.version)
-            end if
-        end if
+        GrayKit.print("  |- " +  port.port_number + ": " + router.port_info(port))
     end for
 
     if not openPortsFound then
-        GrayKit.print(" |- N/A")
+        GrayKit.print("  |- N/A")
     end if
-    print(" ")
+end function
+
+for ip in targetIpAddresses
+    printDeviceInfo(ip)
+    print("")
 end for

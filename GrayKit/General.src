@@ -56,7 +56,6 @@ GrayKit.printHeader = function(programName, author, description = "")
     borderLine = "# " + border
 
     GrayKit.print("")
-    GrayKit.print("")
     GrayKit.print(borderLine)
     for line in lines
         GrayKit.print(line)

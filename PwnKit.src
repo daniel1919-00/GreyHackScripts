@@ -1,14 +1,34 @@
-//
+// 
 // PwnKit – A simple script intented for hacking target machines
 // Author: _daniel1919 (https://github.com/daniel1919-00)
-//
+// 
 
 #import "GrayKit/GrayKit.src"
 
-GrayKit.printHeader("PwnKit", "_daniel1919(https://github.com/daniel1919-00)")
+GrayKit.printHeader("PwnKit", "_daniel1919 (https://github.com/daniel1919-00)", "An automated script for hacking target machines")
 
 metax = include_lib("/lib/metaxploit.so")
 if metax == null then
-    GrayKit.printError("Metaxploit library(metaxploit.so) missing!")
+    GrayKit.printError("Metaxploit library(/lib/metaxploit.so) is missing!")
     exit()
 end if
+
+if params.len == 0 then
+    GrayKit.print("Usage: pwnkit <Target IP Address> [port]")
+    GrayKit.print("Note: If no port is specified, the script will attempt to exploit each port until access is gained.")
+    GrayKit.print("")
+    exit()
+end if
+
+targetIP = params[0]
+if is_valid_ip(targetIP) == 0 then
+    GrayKit.printError("Invalid IP given [" + targetIP + "]!")
+    exit
+end if
+
+targetPort = null
+
+if params.hasIndex(1) then
+    targetPort = params[1]
+end if
+

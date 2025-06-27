@@ -20,7 +20,6 @@ printError = function(message)
 end function
 
 printInfo("")
-printInfo("")
 printInfo("##########################################################")
 printInfo("# PrepKit - A simple C-style preprocessor for GreyScript.")
 printInfo("#")
@@ -46,7 +45,6 @@ end if
 NEW_LINE = char(10)
 CurrentShell = get_shell
 HostComputer = CurrentShell.host_computer
-
 scriptStartTime = time
 
 CLI_FLAGS = {}
@@ -287,7 +285,7 @@ processAndCompile(sourceFile, outputDestPath)
 if CLI_FLAGS.hasIndex("-w") then
     lastSourceFileHash = hash(sourceFile.get_content)
     print("")
-    printInfo("Watching source file for changes...")
+    printInfo("Watching source file [" + sourceFile.name + "] for changes...")
 
     while true
         wait(0.5)  // Uses seconds
@@ -307,7 +305,7 @@ if CLI_FLAGS.hasIndex("-w") then
             scriptStartTime = time
             processAndCompile(sourceFile, outputDestPath)
             print("")
-            printInfo("Watching source file for changes...")
+            printInfo("Watching source file [" + sourceFile.name + "] for changes...")
         end if
     end while
 end if

@@ -55,3 +55,19 @@ GrayKit.Network.getPortDesc = function(port)
         return "Unknown"
     end if
 end function
+
+GrayKit.Network.sortIps = function(ipAddresses)
+    unsortedIpAddresses = []
+    for ip in ipAddresses
+        ipComponents = ip.split("\.")
+        unsortedIpAddresses.push({"ip": ip, "sortKey": ipComponents[0].to_int * 100000 +  ipComponents[1].to_int * 10000 + ipComponents[2].to_int * 1000 + ipComponents[3].to_int})
+    end for
+    unsortedIpAddresses.sort("sortKey")
+
+    sortedIpAddresses = []
+    for ip in unsortedIpAddresses
+        sortedIpAddresses.push(ip.ip)
+    end for
+
+    return sortedIpAddresses
+end function
