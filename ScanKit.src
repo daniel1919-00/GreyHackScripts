@@ -61,7 +61,7 @@ printDeviceInfo = function(ip)
     end if
 
     adminInfo = GrayKit.Network.whois(ip)
-    GrayKit.print("|- Domain Name: " + adminInfo.domain)
+    GrayKit.print("|- Domain: " + adminInfo.domain)
 
     if adminInfo.admin != "" then
         GrayKit.print("  |- Admin: " + adminInfo.admin)
