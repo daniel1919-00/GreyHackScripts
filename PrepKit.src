@@ -38,8 +38,8 @@ if params.len == 0 then
     printInfo(" -i        Compiled binary can be imported in other scripts")
     printInfo(" -c        Preserve entrypoint script name case")
     printInfo(" -w        Watch source file and recompile on changes.")
-    printInfo("             Warning: Because the game does not have file timestamps,")
-    printInfo("             this checks the actual file contents for changes, which is slow!")
+    printInfo("           Warning: Because the game does not have file timestamps,")
+    printInfo("           this checks the actual file contents for changes, which is slow!")
     exit()
 end if
 
